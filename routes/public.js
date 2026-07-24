@@ -87,11 +87,47 @@ router.post('/submit/support', upload.array('documents', 10), (req, res) => {
 // From the website partnership form — routed to Business Partners as "Prospective"
 router.post('/submit/partner', upload.array('documents', 10), (req, res) => {
     try {
-        const data = { ...req.body };
-        data.source = 'website';
-        if (!['prospective', 'active', 'inactive'].includes(data.status)) data.status = 'prospective';
-        if (data.support_type && !Array.isArray(data.support_type)) data.support_type = [data.support_type];
-        const name = (data.partner_name || data.company || data.contact_name || 'Unnamed Partner').toString();
+        // The website partnership form uses friendly labels ("Full Name", "Email",
+        // "Organization Name", ...). The Business module reads specific snake_case
+        // keys (partner_name, contact_name, contact_email, ...), so map them here —
+        // otherwise every field renders blank in the portal.
+        const b = req.body || {};
+        const pick = (...keys) => {
+            for (const k of keys) {
+                const v = b[k];
+                if (Array.isArray(v)) { if (v.length) return v.join(', '); }
+                else if (v != null && String(v).trim() !== '') return String(v).trim();
+            }
+            return '';
+        };
+
+        const notesParts = [];
+        const addr = pick('Organization Address', 'organization_address');
+        if (addr) notesParts.push('Organization Address: ' + addr);
+        const programs = pick('Programs', 'programs');
+        if (programs) notesParts.push('Programs of Interest: ' + programs);
+        const opportunity = pick('Partnership Opportunity', 'partnership_opportunity');
+        if (opportunity) notesParts.push('Partnership Opportunity: ' + opportunity);
+        const timeline = pick('Timeline', 'timeline');
+        if (timeline) notesParts.push('Timeline: ' + timeline);
+        const extra = pick('Additional Information', 'additional_information', 'message');
+        if (extra) notesParts.push('\n' + extra);
+
+        const data = {
+            source: 'website',
+            status: 'prospective',
+            partner_name: pick('Organization Name', 'organization_name', 'partner_name', 'company'),
+            industry: pick('Industry', 'industry'),
+            country: pick('Countries', 'Other Country', 'country'),
+            website: pick('Website', 'website'),
+            contact_name: pick('Full Name', 'full_name', 'contact_name', 'name'),
+            contact_title: pick('Title', 'contact_title'),
+            contact_email: pick('Email', 'email', 'contact_email'),
+            contact_phone: pick('Phone Number', 'phone', 'contact_phone'),
+            notes: notesParts.join('\n'),
+            support_type: [],
+        };
+        const name = data.partner_name || data.contact_name || 'Unnamed Partner';
         const id = db.insertSubmission({
             type: 'business',
             display_name: name,
