@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= sub.display_name %> | One Connect Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="/admin.css" rel="stylesheet"></head>
+<body>
+<div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+        <a href="/support" class="back-link">&larr; Back to requests</a>
+        <div class="detail-header">
+            <div class="detail-title">
+                <span class="badge badge-work-<%= workStatus %>"><%= WORK_LABEL[workStatus] %></span>
+                <span class="pill <%= (sub.data.source==='manual')?'pill-manual':'pill-web' %>" style="margin-left:6px;"><%= sub.data.source==='manual'?'Manual entry':'From website' %></span>
+                <h2><%= sub.display_name %></h2>
+                <p><%= sub.display_subtitle %> &middot; Received <%= new Date(sub.created_at).toLocaleString() %><%= sub.data.assigned_to ? ' · Assigned to ' + sub.data.assigned_to : '' %></p>
+            </div>
+        </div>
+
+        <% if (canManage) { %>
+        <div class="panel">
+            <h3 class="panel-title">Case Management</h3>
+            <form method="POST" action="/support/<%= sub.id %>/assign" class="assign-form">
+                <div class="fc-field"><label>Status</label><select name="work_status"><% WORK_STATUSES.forEach(function(s){ %><option value="<%= s %>" <%= workStatus===s?'selected':'' %>><%= WORK_LABEL[s] %></option><% }); %></select></div>
+                <div class="fc-field"><label>Assign to Field Partner</label>
+                    <select name="assigned_to">
+                        <option value="">— Unassigned —</option>
+                        <% partners.forEach(function(p){ %><option value="<%= p.name %>" <%= sub.data.assigned_to===p.name?'selected':'' %>><%= p.name %></option><% }); %>
+                    </select>
+                </div>
+                <div class="fc-field"><label>Or type another name</label><input type="text" name="assigned_other" placeholder="Other partner name"></div>
+                <div class="fc-field field-submit"><button type="submit" class="btn-primary">Save</button></div>
+            </form>
+        </div>
+        <% } %>
+
+        <div class="detail-doc">
+            <% sections.forEach(function(section, sIndex){ %>
+                <div class="doc-section <%= sIndex===0?'is-first':'' %>">
+                    <h3><%= section.title %></h3>
+                    <dl class="doc-rows"><% section.rows.forEach(function(r){ %><div class="doc-row"><dt><%= r.label %></dt><dd><%= r.value %></dd></div><% }); %></dl>
+                </div>
+            <% }); %>
+            <div class="doc-section">
+                <h3>Uploaded Files</h3>
+                <% if (!files.length) { %><p class="no-files">No files.</p><% } else { %>
+                <ul class="file-list-detail"><% files.forEach(function(fl){ %><li><div><a href="/support/files/<%= fl.id %>" target="_blank"><%= fl.original_name %></a><div class="file-meta"><%= Math.round(fl.size/1024) %> KB</div></div></li><% }); %></ul>
+                <% } %>
+            </div>
+            <div class="doc-section is-last">
+                <h3>Consent Given</h3>
+                <ul class="consent-check-list"><% consent.forEach(function(c){ %><li><span class="tick <%= c.checked?'tick-yes':'tick-no' %>"><%= c.checked?'✓':'✕' %></span><%= c.label %></li><% }); %></ul>
+            </div>
+        </div>
+    </main>
+</div>
+</body></html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users | One Connect Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/admin.css" rel="stylesheet">
+</head>
+<body>
+<div class="admin-shell">
+    <%- include('partials/sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <div>
+                <h2>Users &amp; Access</h2>
+                <div class="greeting-sub">Create accounts, assign roles, and reset passwords.</div>
+            </div>
+            <div class="topbar-actions">
+                <button type="button" class="btn-primary" onclick="document.getElementById('newUserModal').classList.add('open')">+ New User</button>
+            </div>
+        </div>
+
+        <% if (notice) { %><div class="banner banner-ok"><%= notice %></div><% } %>
+        <% if (error) { %><div class="banner banner-err"><%= error %></div><% } %>
+
+        <div class="submissions-table">
+            <div class="table-head"><div><h3>All accounts</h3><div class="table-sub"><%= users.length %> total</div></div></div>
+            <table>
+                <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                <% users.forEach(function(u){ %>
+                    <tr>
+                        <td class="name-cell user-name-cell">
+                            <span class="user-avatar sm"><% if (u.photo) { %><img src="/users/avatar/<%= u.id %>" alt=""><% } else { %><%= (u.name||'?').trim().split(/\s+/).map(function(w){return w[0];}).join('').slice(0,2).toUpperCase() %><% } %></span>
+                            <span><strong><%= u.name %></strong><span>Since <%= new Date(u.created_at).toLocaleDateString() %></span></span>
+                        </td>
+                        <td><%= u.email %></td>
+                        <td>
+                            <form method="POST" action="/users/<%= u.id %>/role" class="inline-form">
+                                <select name="role" onchange="this.form.submit()" <%= u.id === currentUserId ? 'disabled' : '' %>>
+                                    <option value="admin"  <%= u.role === 'admin'  ? 'selected' : '' %>>Admin</option>
+                                    <option value="field"  <%= u.role === 'field'  ? 'selected' : '' %>>Field User</option>
+                                    <option value="viewer" <%= u.role === 'viewer' ? 'selected' : '' %>>Viewer</option>
+                                </select>
+                            </form>
+                        </td>
+                        <td><span class="badge badge-status-<%= u.status === 'active' ? 'reviewed' : 'archived' %>"><%= u.status %></span></td>
+                        <td class="row-actions">
+                            <form method="POST" action="/users/<%= u.id %>/reset-password" class="inline-form">
+                                <button type="submit" class="btn-ghost" title="Generate a new temporary password">Reset password</button>
+                            </form>
+                            <% if (u.id !== currentUserId) { %>
+                                <form method="POST" action="/users/<%= u.id %>/status" class="inline-form">
+                                    <input type="hidden" name="status" value="<%= u.status === 'active' ? 'inactive' : 'active' %>">
+                                    <button type="submit" class="btn-ghost <%= u.status === 'active' ? 'btn-danger' : '' %>"><%= u.status === 'active' ? 'Deactivate' : 'Activate' %></button>
+                                </form>
+                            <% } %>
+                        </td>
+                    </tr>
+                <% }); %>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<!-- New user modal -->
+<div class="modal-overlay" id="newUserModal">
+    <div class="modal-card">
+        <div class="modal-head">
+            <h3>Create a new account</h3>
+            <button type="button" class="modal-close" onclick="document.getElementById('newUserModal').classList.remove('open')" aria-label="Close">&times;</button>
+        </div>
+        <form method="POST" action="/users/create" enctype="multipart/form-data" class="modal-form">
+            <div class="photo-picker">
+                <label class="photo-drop">
+                    <input type="file" name="photo" accept="image/*" onchange="var f=this.files[0];if(f){var r=new FileReader();r.onload=function(e){document.getElementById('photoPrev').style.backgroundImage='url('+e.target.result+')';document.getElementById('photoPrev').classList.add('has');};r.readAsDataURL(f);}">
+                    <span class="photo-prev" id="photoPrev"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
+                </label>
+                <div class="photo-hint">Profile photo<br><span>optional</span></div>
+            </div>
+            <div class="field"><label>Full name</label><input type="text" name="name" placeholder="Jane Doe" required></div>
+            <div class="field"><label>Email (login)</label><input type="email" name="email" placeholder="jane@unitedinone.org" required></div>
+            <div class="field"><label>Role</label>
+                <select name="role" required>
+                    <option value="admin">Admin — full access</option>
+                    <option value="field">Field User — Create a Field Case only</option>
+                    <option value="viewer">Viewer — view all except Talent</option>
+                </select>
+            </div>
+            <div class="field"><label>Temporary password</label><input type="text" name="password" placeholder="min 8 characters" minlength="8" required></div>
+            <div class="modal-actions">
+                <button type="button" class="btn-ghost" onclick="document.getElementById('newUserModal').classList.remove('open')">Cancel</button>
+                <button type="submit" class="btn-primary">Create account</button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

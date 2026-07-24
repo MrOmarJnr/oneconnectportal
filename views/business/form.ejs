@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= mode==='edit'?'Edit':'New' %> Business Partner | One Connect Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="/admin.css" rel="stylesheet"></head>
+<body>
+<div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar"><div>
+            <a href="<%= mode==='edit' ? '/business/'+id : '/business' %>" class="back-link">&larr; Back</a>
+            <h2><%= mode==='edit'?'Edit Business Partner':'New Business Partner' %></h2>
+        </div></div>
+        <% if (error) { %><div class="banner banner-err"><%= error %></div><% } %>
+        <form method="POST" action="<%= mode==='edit' ? '/business/'+id+'/edit' : '/business/new' %>" enctype="multipart/form-data" class="fc-form">
+            <% groups.forEach(function(g){ %>
+            <div class="panel"><h3 class="panel-title"><%= g.group %></h3>
+                <div class="fc-grid"><% g.fields.forEach(function(f){ %><%- include('../partials/field-input', { f: f, data: data }) %><% }); %></div>
+                <% if (g.group === 'Partnership') { %>
+                    <div style="margin-top:16px;">
+                        <label style="font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:8px;">Support Type <span class="panel-hint">select all that apply</span></label>
+                        <div class="prog-options">
+                        <% SUPPORT_TYPES.forEach(function(s){ var on=(data.support_type||[]).indexOf(s)>=0; %>
+                            <label class="prog-check"><input type="checkbox" name="support_type" value="<%= s %>" <%= on?'checked':'' %>><span><%= s %></span></label>
+                        <% }); %>
+                        </div>
+                        <div class="fc-field" style="margin-top:16px;max-width:280px;"><label>Status</label>
+                            <select name="status"><% STATUSES.forEach(function(s){ %><option value="<%= s %>" <%= (data.status||'prospective')===s?'selected':'' %>><%= STATUS_LABEL[s] %></option><% }); %></select>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+            <% }); %>
+            <% if (mode==='new') { %>
+            <div class="panel"><h3 class="panel-title">Documents <span class="panel-hint">optional — you can add more later</span></h3><input type="file" name="documents" multiple class="fc-file"></div>
+            <% } %>
+            <div class="fc-actions"><a href="<%= mode==='edit' ? '/business/'+id : '/business' %>" class="btn-ghost">Cancel</a><button type="submit" class="btn-primary"><%= mode==='edit'?'Save Changes':'Create Partner' %></button></div>
+        </form>
+    </main>
+</div>
+</body></html>

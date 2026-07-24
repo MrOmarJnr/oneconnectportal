@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporting — Overview | One Connect Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="/admin.css" rel="stylesheet"></head>
+<body>
+<div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar"><div><h2>Reporting</h2><div class="greeting-sub">Executive overview across all programs.</div></div></div>
+        <%- include('../partials/reports-tabs') %>
+
+        <div class="kpi-row">
+            <div class="kpi-card"><div class="kpi-val"><%= R.overview.kpis.field %></div><div class="kpi-lbl">Field Cases</div></div>
+            <div class="kpi-card"><div class="kpi-val"><%= R.overview.kpis.support %></div><div class="kpi-lbl">Support Requests</div></div>
+            <div class="kpi-card"><div class="kpi-val"><%= R.overview.kpis.business %></div><div class="kpi-lbl">Business Partners</div></div>
+            <div class="kpi-card"><div class="kpi-val"><%= R.overview.kpis.volunteers %></div><div class="kpi-lbl">Volunteers</div></div>
+            <div class="kpi-card"><div class="kpi-val"><%= R.overview.kpis.staff %></div><div class="kpi-lbl">Staff</div></div>
+        </div>
+
+        <div class="report-grid">
+            <div class="report-card"><h3>Program Activity by Country</h3><div class="chart-box"><canvas id="c_activity"></canvas></div></div>
+            <div class="report-card"><h3>Impact by Program Type</h3><div class="chart-box"><canvas id="c_impact"></canvas></div></div>
+        </div>
+    </main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="/reports.js"></script>
+<script>
+    const R = <%- JSON.stringify(R.overview) %>;
+    chGrouped('c_activity', R.activityByCountry.labels, [{label:'Field Cases',data:R.activityByCountry.cases},{label:'Staff',data:R.activityByCountry.staff}]);
+    chPie('c_impact', R.impactByProgram);
+</script>
+</body></html>

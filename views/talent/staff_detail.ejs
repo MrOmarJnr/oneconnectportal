@@ -1,0 +1,48 @@
+<%
+    function val(v){ if(v===undefined||v===null||v==='') return '—'; return String(v); }
+%>
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= sub.display_name %> | One Connect Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="/admin.css" rel="stylesheet"></head>
+<body>
+<div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+        <a href="/talent/staff" class="back-link">&larr; Back to staffing</a>
+        <div class="detail-header">
+            <div class="detail-title" style="display:flex;gap:16px;align-items:center;">
+                <% if (photo) { %><img src="/talent/files/<%= photo.id %>" alt="photo" class="staff-photo"><% } else { %><span class="staff-photo staff-photo-empty"><%= (sub.display_name||'?').slice(0,1) %></span><% } %>
+                <div>
+                    <span class="badge badge-staff"><%= sub.data.status || 'Staff' %></span>
+                    <h2><%= sub.display_name %></h2>
+                    <p><%= [sub.data.person_type, sub.data.position, sub.data.program].filter(Boolean).join(' · ') || '' %></p>
+                </div>
+            </div>
+            <div class="detail-actions"><a href="/talent/staff/<%= sub.id %>/edit" class="btn-ghost">Edit</a></div>
+        </div>
+        <% if (notice) { %><div class="banner banner-ok"><%= notice %></div><% } %>
+
+        <div class="detail-doc">
+            <% groups.forEach(function(g, gi){ %>
+                <div class="doc-section <%= gi===0?'is-first':'' %>">
+                    <h3><%= g.group %><% if (g.sensitive) { %> <span style="color:#e5484d;font-size:11px;">(sensitive)</span><% } %></h3>
+                    <dl class="doc-rows"><% g.fields.forEach(function(f){ %><div class="doc-row"><dt><%= f.label %></dt><dd><%= val(sub.data[f.key]) %></dd></div><% }); %></dl>
+                </div>
+            <% }); %>
+            <div class="doc-section is-last">
+                <h3>Document / Contract Repository</h3>
+                <% if (!files.length) { %><p class="no-files">No documents yet.</p><% } else { %>
+                    <ul class="file-list-detail"><% files.forEach(function(fl){ %><li><div><a href="/talent/files/<%= fl.id %>" target="_blank"><%= fl.original_name %></a><div class="file-meta"><%= (fl.field_name==='photo'?'Photo · ':'') %><%= Math.round(fl.size/1024) %> KB</div></div></li><% }); %></ul>
+                <% } %>
+                <form method="POST" action="/talent/staff/<%= sub.id %>/files" enctype="multipart/form-data" class="upload-inline">
+                    <input type="file" name="documents" multiple class="fc-file" required>
+                    <button type="submit" class="btn-primary">Upload documents</button>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+</body></html>

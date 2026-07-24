@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Field Cases | One Connect Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/admin.css" rel="stylesheet">
+</head>
+<body>
+<div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <div>
+                <h2>Create a Field Case</h2>
+                <div class="greeting-sub">Field cases filed by partners from the field.</div>
+            </div>
+            <% if (canCreate) { %><a href="/field/new" class="btn-primary">+ New Field Case</a><% } %>
+        </div>
+
+        <% if (notice) { %><div class="banner banner-ok"><%= notice %></div><% } %>
+
+        <div class="submissions-table">
+            <div class="table-head"><div><h3>All field cases</h3><div class="table-sub"><%= rows.length %> total</div></div></div>
+            <% if (rows.length === 0) { %>
+                <div class="empty-state"><p>No field cases yet. <% if (canCreate) { %>Use “New Field Case” to file one.<% } %></p></div>
+            <% } else { %>
+                <table>
+                    <thead><tr><th class="col-num">#</th><th>Location</th><th>Partner / Country</th><th>Programs</th><th>Status</th><th>Files</th><th>Submitted</th></tr></thead>
+                    <tbody>
+                    <% rows.forEach(function(row, i){ %>
+                        <tr class="row-link" onclick="window.location='/field/cases/<%= row.id %>'">
+                            <td class="col-num"><%= i + 1 %></td>
+                            <td class="name-cell"><strong><%= row.display_name %></strong><span><%= (row.data.visit_type || '') %></span></td>
+                            <td class="name-cell"><strong><%= row.data.field_partner || '—' %></strong><span><%= row.data.country || '' %></span></td>
+                            <td><% (row.data.program_type || []).forEach(function(p){ %><span class="pill pill-prog"><%= p %></span> <% }); %></td>
+                            <td><span class="badge badge-status-<%= row.status %>"><%= row.status %></span></td>
+                            <td><% if (fileCountMap[row.id]) { %><span class="file-chip">&#128206; <%= fileCountMap[row.id] %></span><% } else { %><span class="file-chip">—</span><% } %></td>
+                            <td><%= new Date(row.created_at).toLocaleDateString() %></td>
+                        </tr>
+                    <% }); %>
+                    </tbody>
+                </table>
+            <% } %>
+        </div>
+    </main>
+</div>
+</body>
+</html>

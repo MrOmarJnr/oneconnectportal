@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporting — Business | One Connect Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="/admin.css" rel="stylesheet"></head>
+<body>
+<div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar"><div><h2>Reporting</h2><div class="greeting-sub">Business partner network.</div></div></div>
+        <%- include('../partials/reports-tabs') %>
+        <div class="report-grid">
+            <div class="report-card"><h3>Partners by Status</h3><div class="chart-box"><canvas id="c_stat"></canvas></div></div>
+            <div class="report-card"><h3>Partners by Support Type</h3><div class="chart-box"><canvas id="c_type"></canvas></div></div>
+            <div class="report-card report-wide"><h3>New Partners Over Time</h3><div class="chart-box"><canvas id="c_time"></canvas></div></div>
+            <div class="report-card report-wide"><h3>Partners by Dollar Value (top 10)</h3><div class="chart-box"><canvas id="c_dollar"></canvas></div></div>
+        </div>
+        <div class="submissions-table" style="margin-top:22px;">
+            <div class="table-head"><div><h3>Aging Report — Partnership Length</h3><div class="table-sub">longest first</div></div></div>
+            <table><thead><tr><th>Partner</th><th>Status</th><th>Since</th><th>Duration</th></tr></thead><tbody>
+            <% if(!R.business.aging.length){ %><tr><td colspan="4" class="no-files" style="padding:24px;">No partners yet.</td></tr><% } %>
+            <% R.business.aging.forEach(function(r){ %><tr class="row-link" onclick="window.location='/business/<%= r.id %>'"><td><strong><%= r.name %></strong></td><td><span class="badge badge-biz-<%= r.status %>"><%= r.status %></span></td><td><%= r.since || '—' %></td><td><%= r.days===null ? '—' : (r.days>=365 ? (Math.round(r.days/36.5)/10)+' yrs' : r.days+' days') %></td></tr><% }); %>
+            </tbody></table>
+        </div>
+    </main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="/reports.js"></script>
+<script>
+    const R = <%- JSON.stringify(R.business) %>;
+    chPie('c_stat', R.byStatus);
+    chBar('c_type', R.bySupportType, false, '#f5a623');
+    chLine('c_time', R.overTime);
+    chBar('c_dollar', R.byDollar, true, '#23c69a');
+</script>
+</body></html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= v.display_name %> | One Connect Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="/admin.css" rel="stylesheet"></head>
+<body>
+<div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+        <a href="/talent/volunteers" class="back-link">&larr; Back to pipeline</a>
+        <div class="detail-header">
+            <div class="detail-title">
+                <span class="badge badge-stage-<%= stage %>"><%= STAGE_LABEL[stage] %></span>
+                <h2><%= v.display_name %></h2>
+                <p>Applied to: <strong><%= v.data.opportunity || '—' %></strong> · <%= v.data.email || '' %> <%= v.data.phone ? '· ' + v.data.phone : '' %></p>
+            </div>
+
+        </div>
+
+<div class="mgmt-panel">
+            <div class="mgmt-label">Pipeline Stage</div>
+            <form class="status-inline" method="POST" action="/talent/volunteers/<%= v.id %>/stage">
+                <select name="stage"><% stages.forEach(function(s){ %><option value="<%= s %>" <%= stage===s?'selected':'' %>><%= STAGE_LABEL[s] %></option><% }); %></select>
+                <button type="submit" class="btn-primary">Move Stage</button>
+            </form>
+        </div>
+        <div class="detail-doc">
+            <div class="doc-section is-first">
+                <h3>Applicant</h3>
+                <dl class="doc-rows">
+                    <div class="doc-row"><dt>Location</dt><dd><%= v.data.location || '—' %></dd></div>
+                    <div class="doc-row"><dt>Availability</dt><dd><%= v.data.availability || '—' %></dd></div>
+                    <div class="doc-row"><dt>Motivation</dt><dd><%= v.data.motivation || '—' %></dd></div>
+                    <div class="doc-row"><dt>Source</dt><dd><%= v.data.source === 'manual' ? 'Added manually' : 'Website application' %></dd></div>
+                </dl>
+            </div>
+            <% if (files.length) { %>
+            <div class="doc-section"><h3>Files</h3><ul class="file-list-detail"><% files.forEach(function(fl){ %><li><div><a href="/talent/files/<%= fl.id %>" target="_blank"><%= fl.original_name %></a><div class="file-meta"><%= Math.round(fl.size/1024) %> KB</div></div></li><% }); %></ul></div>
+            <% } %>
+            <div class="doc-section is-last">
+                <h3>Stage Notes</h3>
+                <form method="POST" action="/talent/volunteers/<%= v.id %>/note" class="note-form">
+                    <input type="text" name="note" placeholder="Add a note for the current stage..." required>
+                    <button type="submit" class="btn-primary">Add Note</button>
+                </form>
+                <% if (!notes.length) { %><p class="no-files" style="margin-top:14px;">No notes yet.</p><% } else { %>
+                    <ul class="note-timeline">
+                        <% notes.slice().reverse().forEach(function(n){ %>
+                            <li><div class="note-meta"><span class="badge badge-stage-<%= n.stage %>"><%= STAGE_LABEL[n.stage] || n.stage %></span> <%= n.by || '' %> · <%= new Date(n.at).toLocaleString() %></div><div class="note-text"><%= n.text %></div></li>
+                        <% }); %>
+                    </ul>
+                <% } %>
+            </div>
+        </div>
+    </main>
+</div>
+</body></html>

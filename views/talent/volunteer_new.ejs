@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Volunteer | One Connect Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="/admin.css" rel="stylesheet"></head>
+<body>
+<div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar"><div><a href="/talent/volunteers" class="back-link">&larr; Back</a><h2>Add Volunteer</h2></div></div>
+        <% if (error) { %><div class="banner banner-err"><%= error %></div><% } %>
+        <form method="POST" action="/talent/volunteers/new" class="fc-form">
+            <div class="panel"><h3 class="panel-title">Volunteer</h3>
+                <div class="fc-grid">
+                    <div class="fc-field"><label>Full Name *</label><input type="text" name="full_name" required></div>
+                    <div class="fc-field"><label>Email</label><input type="text" name="email"></div>
+                    <div class="fc-field"><label>Phone</label><input type="text" name="phone"></div>
+                    <div class="fc-field"><label>Opportunity Applied To</label><input type="text" name="opportunity" placeholder="e.g. Global Classroom Tutor"></div>
+                    <div class="fc-field"><label>Location</label><input type="text" name="location"></div>
+                </div>
+            </div>
+            <div class="fc-actions"><a href="/talent/volunteers" class="btn-ghost">Cancel</a><button type="submit" class="btn-primary">Add Volunteer</button></div>
+        </form>
+    </main>
+</div>
+</body></html>

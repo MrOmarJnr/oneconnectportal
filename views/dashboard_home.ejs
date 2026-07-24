@@ -1,0 +1,61 @@
+<% var isAdmin = (typeof currentRole==='undefined') || currentRole==='admin'; %>
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard | One Connect Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="/admin.css" rel="stylesheet"></head>
+<body>
+<div class="admin-shell">
+    <%- include('partials/sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <div>
+                <h2>Hello <%= adminName %></h2>
+                <div class="greeting-sub">Here's a snapshot across all programs.</div>
+            </div>
+            <a href="/reports" class="btn-primary">Open full analytics &rarr;</a>
+        </div>
+
+        <div class="dash-kpis">
+            <div class="dash-kpi"><span class="dash-ico k-violet"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 2v4M16 2v4"/></svg></span><div><div class="dash-val"><%= R.overview.kpis.field %></div><div class="dash-lbl">Field Cases</div></div></div>
+            <div class="dash-kpi"><span class="dash-ico k-blue"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span><div><div class="dash-val"><%= R.overview.kpis.support %></div><div class="dash-lbl">Support Requests</div></div></div>
+            <div class="dash-kpi"><span class="dash-ico k-amber"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span><div><div class="dash-val"><%= R.overview.kpis.business %></div><div class="dash-lbl">Business Partners</div></div></div>
+            <div class="dash-kpi"><span class="dash-ico k-teal"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span><div><div class="dash-val"><%= R.overview.kpis.volunteers %></div><div class="dash-lbl">Volunteers</div></div></div>
+            <div class="dash-kpi"><span class="dash-ico k-pink"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg></span><div><div class="dash-val"><%= R.overview.kpis.staff %></div><div class="dash-lbl">Staff</div></div></div>
+        </div>
+
+        <div class="dash-main">
+            <div class="dash-analytics">
+                <div class="report-card">
+                    <div class="dash-card-head"><h3>Quick Analytics</h3><a href="/reports" class="dash-link">Full report &rarr;</a></div>
+                    <div class="dash-charts">
+                        <div class="dash-chart"><span class="dash-chart-t">Support by Status</span><div class="chart-box sm"><canvas id="c_support"></canvas></div></div>
+                        <div class="dash-chart"><span class="dash-chart-t">Field Cases by Program</span><div class="chart-box sm"><canvas id="c_program"></canvas></div></div>
+                    </div>
+                    <div class="dash-chart" style="margin-top:8px;"><span class="dash-chart-t">Volunteer Funnel</span><div class="chart-box sm"><canvas id="c_funnel"></canvas></div></div>
+                </div>
+            </div>
+
+            <aside class="dash-actions">
+                <h3>Quick Actions</h3>
+                <% if (isAdmin) { %>
+                <a href="/field/new" class="qa qa-violet"><span>Create a Field Case</span><span class="qa-arrow">&rarr;</span></a>
+                <a href="/support/new" class="qa qa-blue"><span>New Support Request</span><span class="qa-arrow">&rarr;</span></a>
+                <a href="/business/new" class="qa qa-amber"><span>New Business Partner</span><span class="qa-arrow">&rarr;</span></a>
+                <a href="/talent/staff/new" class="qa qa-teal"><span>Add Staff Profile</span><span class="qa-arrow">&rarr;</span></a>
+                <% } %>
+                <a href="/reports" class="qa qa-dark"><span>View Full Reports</span><span class="qa-arrow">&rarr;</span></a>
+            </aside>
+        </div>
+    </main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="/reports.js"></script>
+<script>
+    const R = <%- JSON.stringify({ support: R.support.byStatus, program: R.field.byProgram, funnel: R.talent.funnel }) %>;
+    chPie('c_support', R.support);
+    chBar('c_program', R.program, false, '#6c5ce7');
+    chBar('c_funnel', R.funnel, true, '#23c69a');
+</script>
+</body></html>

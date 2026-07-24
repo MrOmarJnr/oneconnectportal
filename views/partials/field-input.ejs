@@ -1,0 +1,14 @@
+<% var _v = (typeof data !== 'undefined' && data && data[f.key] != null) ? data[f.key] : (typeof prefill !== 'undefined' && prefill && f.key === 'field_partner' ? prefill : ''); %>
+<div class="fc-field<%= f.type === 'textarea' ? ' fc-field-wide' : '' %>">
+    <label><%= f.label %><%= f.required ? ' *' : '' %></label>
+    <% if (f.type === 'textarea') { %>
+        <textarea name="<%= f.key %>" rows="3" <%= f.required ? 'required' : '' %>><%= _v %></textarea>
+    <% } else if (f.type === 'select') { %>
+        <select name="<%= f.key %>" <%= f.required ? 'required' : '' %>>
+            <option value="">— select —</option>
+            <% f.options.forEach(function(o){ %><option value="<%= o %>" <%= String(_v) === String(o) ? 'selected' : '' %>><%= o %></option><% }); %>
+        </select>
+    <% } else { %>
+        <input type="<%= f.type %>" name="<%= f.key %>" value="<%= _v %>" <%= f.required ? 'required' : '' %>>
+    <% } %>
+</div>

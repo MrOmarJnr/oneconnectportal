@@ -1,0 +1,88 @@
+<%
+    function val(v){ if(v===undefined||v===null||v==='') return '—'; if(Array.isArray(v)) return v.length?v.join(', '):'—'; return String(v); }
+    var groups = [
+        { title: 'Visit Information', fields: fc.VISIT_FIELDS },
+        { title: 'Field Notes', fields: fc.FIELD_NOTES },
+        { title: 'Distribution Log', fields: fc.DIST_LOG },
+        { title: 'Impact Summary', fields: fc.IMPACT },
+    ];
+%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= c.display_name %> | One Connect Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/admin.css" rel="stylesheet">
+</head>
+<body>
+<div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+        <a href="/field" class="back-link">&larr; Back to field cases</a>
+        <div class="detail-header">
+            <div class="detail-title">
+                <span class="badge badge-status-<%= c.status %>"><%= c.status %></span>
+                <h2><%= c.display_name %></h2>
+                <p><%= c.data.field_partner || '' %> &middot; <%= c.data.country || '' %> &middot; Submitted <%= new Date(c.created_at).toLocaleString() %></p>
+            </div>
+
+        </div>
+
+<% if (canReview) { %>
+        <div class="mgmt-panel">
+            <div class="mgmt-label">Case Status</div>
+            <form class="status-inline" method="POST" action="/field/cases/<%= c.id %>/status">
+                <select name="status"><% fc.STATUSES.forEach(function(s){ %><option value="<%= s %>" <%= c.status===s?'selected':'' %>><%= s %></option><% }); %></select>
+                <button type="submit" class="btn-primary">Update Status</button>
+            </form>
+        </div>
+        <% } %>
+        <div class="detail-doc">
+            <div class="doc-section is-first">
+                <h3>Program Type</h3>
+                <div><% ((c.data.program_type)||[]).forEach(function(p){ %><span class="pill pill-prog"><%= p %></span> <% }); %>
+                <% if(!(c.data.program_type&&c.data.program_type.length)){ %><span class="no-files">None selected</span><% } %>
+                <% if(c.data.program_other){ %><div class="doc-row" style="margin-top:12px;"><dt>Other</dt><dd><%= c.data.program_other %></dd></div><% } %></div>
+            </div>
+
+            <% groups.forEach(function(g){ %>
+                <div class="doc-section">
+                    <h3><%= g.title %></h3>
+                    <dl class="doc-rows">
+                        <% g.fields.forEach(function(f){ %>
+                            <div class="doc-row"><dt><%= f.label %></dt><dd><%= val(c.data[f.key]) %></dd></div>
+                        <% }); %>
+                    </dl>
+                </div>
+            <% }); %>
+
+            <div class="doc-section">
+                <h3>Checklist — Confirmed Items</h3>
+                <% fc.CHECK_GROUPS.forEach(function(grp){ var checked = c.data[grp.name] || []; if (checked.length) { %>
+                    <div class="chk-block">
+                        <div class="chk-block-title"><%= grp.title %></div>
+                        <ul class="consent-check-list">
+                            <% checked.forEach(function(item){ %><li><span class="tick tick-yes">&#10003;</span><%= item %></li><% }); %>
+                        </ul>
+                    </div>
+                <% } }); %>
+                <% var any = fc.CHECK_GROUP_NAMES.some(function(n){ return (c.data[n]||[]).length; }); if(!any){ %><p class="no-files">No checklist items were confirmed.</p><% } %>
+            </div>
+
+            <div class="doc-section is-last">
+                <h3>Uploaded Files</h3>
+                <% if (!files.length) { %><p class="no-files">No files uploaded with this case.</p><% } else { %>
+                    <ul class="file-list-detail">
+                        <% files.forEach(function(fl){ %>
+                            <li><div><a href="/field/files/<%= fl.id %>" target="_blank"><%= fl.original_name %></a><div class="file-meta"><%= Math.round(fl.size/1024) %> KB</div></div></li>
+                        <% }); %>
+                    </ul>
+                <% } %>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

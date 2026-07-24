@@ -1,0 +1,41 @@
+<% function ageClass(d){ return d>7?'age-red':(d>=3?'age-amber':'age-green'); } %>
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporting — Support | One Connect Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="/admin.css" rel="stylesheet"></head>
+<body>
+<div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar"><div><h2>Reporting</h2><div class="greeting-sub">Partnership support pipeline health.</div></div></div>
+        <%- include('../partials/reports-tabs') %>
+        <div class="kpi-row">
+            <div class="kpi-card"><div class="kpi-val"><%= R.support.total %></div><div class="kpi-lbl">Total Requests</div></div>
+            <div class="kpi-card"><div class="kpi-val"><%= R.support.avgDays===null ? '—' : R.support.avgDays + 'd' %></div><div class="kpi-lbl">Avg. Time to Close</div></div>
+            <div class="kpi-card"><div class="kpi-val"><%= R.support.aging.length %></div><div class="kpi-lbl">Open Requests</div></div>
+        </div>
+        <div class="report-grid">
+            <div class="report-card"><h3>Requests by Status</h3><div class="chart-box"><canvas id="c_stat"></canvas></div></div>
+            <div class="report-card"><h3>Requests by Source</h3><div class="chart-box"><canvas id="c_src"></canvas></div></div>
+            <div class="report-card report-wide"><h3>Requests by Assigned Field Partner</h3><div class="chart-box"><canvas id="c_partner"></canvas></div></div>
+        </div>
+        <div class="submissions-table" style="margin-top:22px;">
+            <div class="table-head"><div><h3>Aging Report — Open Requests</h3><div class="table-sub">oldest first</div></div></div>
+            <table><thead><tr><th>Request</th><th>Status</th><th>Assigned</th><th>Age (days)</th></tr></thead><tbody>
+            <% if(!R.support.aging.length){ %><tr><td colspan="4" class="no-files" style="padding:24px;">No open requests.</td></tr><% } %>
+            <% R.support.aging.forEach(function(r){ %><tr class="row-link" onclick="window.location='/support/<%= r.id %>'"><td><strong><%= r.name %></strong></td><td><span class="badge badge-work-<%= r.status %>"><%= r.status.replace('_',' ') %></span></td><td><%= r.assigned %></td><td><span class="age-pill <%= ageClass(r.age) %>"><%= r.age %></span></td></tr><% }); %>
+            </tbody></table>
+        </div>
+    </main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="/reports.js"></script>
+<script>
+    const R = <%- JSON.stringify(R.support) %>;
+    chPie('c_stat', R.byStatus);
+    chBar('c_src', R.bySource, false, '#4c7df0');
+    chBar('c_partner', R.byPartner, true, '#6c5ce7');
+</script>
+</body></html>

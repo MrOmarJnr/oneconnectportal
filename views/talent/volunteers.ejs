@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volunteers | One Connect Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="/admin.css" rel="stylesheet"></head>
+<body>
+<div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <div><h2>Talent Management</h2><div class="greeting-sub">Volunteer lifecycle and staffing.</div></div>
+            <div class="topbar-actions"><a href="/talent/volunteers/new" class="btn-primary">+ Add Volunteer</a></div>
+        </div>
+        <%- include('../partials/talent-tabs') %>
+        <% if (notice) { %><div class="banner banner-ok"><%= notice %></div><% } %>
+
+        <div class="pipeline">
+            <% stages.forEach(function(s){ %>
+                <div class="pipe-col">
+                    <div class="pipe-head"><span class="pipe-dot pipe-<%= s %>"></span><%= STAGE_LABEL[s] %> <span class="pipe-count"><%= board[s].length %></span></div>
+                    <div class="pipe-body">
+                        <% board[s].forEach(function(v){ %>
+                            <a class="pipe-card" href="/talent/volunteers/<%= v.id %>">
+                                <strong><%= v.display_name %></strong>
+                                <span><%= v.data.opportunity || v.display_subtitle || 'Volunteer' %></span>
+                            </a>
+                        <% }); %>
+                        <% if (board[s].length===0){ %><div class="pipe-empty">—</div><% } %>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    </main>
+</div>
+</body></html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= page.title %> | One Connect Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/admin.css" rel="stylesheet">
+</head>
+<body>
+<div class="admin-shell">
+    <%- include('partials/sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <div>
+                <h2><%= page.title %></h2>
+                <div class="greeting-sub"><%= page.blurb %></div>
+            </div>
+        </div>
+        <div class="placeholder-card">
+            <span class="placeholder-badge"><%= page.phase %> &middot; coming next</span>
+            <h3><%= page.title %></h3>
+            <p><%= page.blurb %></p>
+        </div>
+    </main>
+</div>
+</body>
+</html>

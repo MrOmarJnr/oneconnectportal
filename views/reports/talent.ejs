@@ -1,0 +1,55 @@
+<% function flag(v, good, warn){ if(good.indexOf(v)>=0) return 'fl-green'; if(warn.indexOf(v)>=0) return 'fl-amber'; return 'fl-red'; } %>
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporting — Talent | One Connect Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="/admin.css" rel="stylesheet"></head>
+<body>
+<div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar"><div><h2>Reporting</h2><div class="greeting-sub">Volunteers and staffing.</div></div></div>
+        <%- include('../partials/reports-tabs') %>
+        <h3 class="report-section-title">Volunteer Pipeline</h3>
+        <div class="report-grid">
+            <div class="report-card report-wide"><h3>Volunteer Funnel</h3><div class="chart-box"><canvas id="c_funnel"></canvas></div></div>
+            <div class="report-card"><h3>Volunteers by Stage</h3><div class="chart-box"><canvas id="c_stage"></canvas></div></div>
+            <div class="report-card"><h3>Volunteers by Opportunity</h3><div class="chart-box"><canvas id="c_opp"></canvas></div></div>
+        </div>
+        <h3 class="report-section-title">Staffing</h3>
+        <div class="report-grid">
+            <div class="report-card"><h3>Headcount by Type</h3><div class="chart-box"><canvas id="c_type"></canvas></div></div>
+            <div class="report-card"><h3>Headcount by Country</h3><div class="chart-box"><canvas id="c_scountry"></canvas></div></div>
+            <div class="report-card"><h3>Status Breakdown</h3><div class="chart-box"><canvas id="c_sstatus"></canvas></div></div>
+            <div class="report-card report-wide"><h3>Hours Logged (top 10)</h3><div class="chart-box"><canvas id="c_hours"></canvas></div></div>
+        </div>
+        <div class="submissions-table" style="margin-top:22px;">
+            <div class="table-head"><div><h3>Compliance Status</h3><div class="table-sub">background · agreements · tax forms</div></div></div>
+            <table><thead><tr><th>Staff</th><th>Background Check</th><th>Signed Agreements</th><th>Tax Forms</th></tr></thead><tbody>
+            <% if(!R.talent.compliance.length){ %><tr><td colspan="4" class="no-files" style="padding:24px;">No staff profiles yet.</td></tr><% } %>
+            <% R.talent.compliance.forEach(function(r){ %>
+                <tr class="row-link" onclick="window.location='/talent/staff/<%= r.id %>'">
+                    <td><strong><%= r.name %></strong></td>
+                    <td><span class="flag <%= flag(r.background,['Cleared'],['Pending','Not started']) %>"><%= r.background %></span></td>
+                    <td><span class="flag <%= flag(r.agreements,['Yes'],['Partial']) %>"><%= r.agreements %></span></td>
+                    <td><span class="flag <%= flag(r.tax,['Received','N/A'],['Not received']) %>"><%= r.tax %></span></td>
+                </tr>
+            <% }); %>
+            </tbody></table>
+        </div>
+    </main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="/reports.js"></script>
+<script>
+    const R = <%- JSON.stringify(R.talent) %>;
+    chBar('c_funnel', R.funnel, true, '#6c5ce7');
+    chPie('c_stage', R.volByStage);
+    chBar('c_opp', R.volByOpportunity, false, '#4c7df0');
+    chPie('c_type', R.staffByType);
+    chBar('c_scountry', R.staffByCountry, false, '#23c69a');
+    chPie('c_sstatus', R.staffByStatus);
+    chBar('c_hours', R.hours, true, '#f5a623');
+</script>
+</body></html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staffing | One Connect Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="/admin.css" rel="stylesheet"></head>
+<body>
+<div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <div><h2>Talent Management</h2><div class="greeting-sub">Volunteer lifecycle and staffing.</div></div>
+            <div class="topbar-actions"><a href="/talent/staff/new" class="btn-primary">+ New Staff Profile</a></div>
+        </div>
+        <%- include('../partials/talent-tabs') %>
+        <% if (notice) { %><div class="banner banner-ok"><%= notice %></div><% } %>
+
+        <div class="submissions-table">
+            <div class="table-head">
+                <div><h3>Staff &amp; team</h3><div class="table-sub"><%= rows.length %> shown</div></div>
+                <form class="search-box" method="GET" action="/talent/staff">
+                    <span class="search-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+                    <input type="text" name="q" placeholder="Search name..." value="<%= q %>"><button type="submit">Search</button>
+                </form>
+            </div>
+            <% if (rows.length === 0) { %><div class="empty-state"><p>No staff profiles yet.</p></div><% } else { %>
+            <table><thead><tr><th class="col-num">#</th><th>Name</th><th>Type</th><th>Program</th><th>Country</th><th>Status</th><th>Docs</th></tr></thead><tbody>
+            <% rows.forEach(function(row,i){ %>
+                <tr class="row-link" onclick="window.location='/talent/staff/<%= row.id %>'">
+                    <td class="col-num"><%= i+1 %></td>
+                    <td class="name-cell"><strong><%= row.display_name %></strong><span><%= row.data.position || '' %></span></td>
+                    <td><%= row.data.person_type || '—' %></td>
+                    <td><%= row.data.program || '—' %></td>
+                    <td><%= row.data.country || '—' %></td>
+                    <td><span class="badge badge-staff"><%= row.data.status || '—' %></span></td>
+                    <td><% if (fileCountMap[row.id]) { %><span class="file-chip">&#128206; <%= fileCountMap[row.id] %></span><% } else { %><span class="file-chip">—</span><% } %></td>
+                </tr>
+            <% }); %>
+            </tbody></table>
+            <% } %>
+        </div>
+    </main>
+</div>
+</body></html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Business Partners | One Connect Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="/admin.css" rel="stylesheet"></head>
+<body>
+<div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <div><h2>Business Partners</h2><div class="greeting-sub">Corporate &amp; business partnerships, from the website and manual entry.</div></div>
+            <div class="topbar-actions"><% if (canManage) { %><a href="/business/new" class="btn-primary">+ New Business Partner</a><% } %></div>
+        </div>
+        <% if (notice) { %><div class="banner banner-ok"><%= notice %></div><% } %>
+
+        <div class="stats-grid">
+            <a href="/business" class="stat-card <%= statusFilter==='all'?'is-active':'' %>"><span class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span><div class="stat-body"><div class="stat-label">All Partners</div><div class="stat-value"><%= counts.all %></div></div></a>
+            <a href="/business?status=active" class="stat-card <%= statusFilter==='active'?'is-active':'' %>"><span class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6 9 17l-5-5"/></svg></span><div class="stat-body"><div class="stat-label">Active</div><div class="stat-value"><%= counts.active %></div></div></a>
+            <a href="/business?status=prospective" class="stat-card <%= statusFilter==='prospective'?'is-active':'' %>"><span class="stat-icon stat-icon-new"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></span><div class="stat-body"><div class="stat-label">Prospective</div><div class="stat-value"><%= counts.prospective %></div></div></a>
+            <a href="/business?status=inactive" class="stat-card <%= statusFilter==='inactive'?'is-active':'' %>"><span class="stat-icon stat-icon-opportunity"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg></span><div class="stat-body"><div class="stat-label">Inactive</div><div class="stat-value"><%= counts.inactive %></div></div></a>
+        </div>
+
+        <div class="submissions-table">
+            <div class="table-head">
+                <div><h3>Partners</h3><div class="table-sub"><%= rows.length %> shown</div></div>
+                <form class="search-box" method="GET" action="/business">
+                    <% if (statusFilter !== 'all') { %><input type="hidden" name="status" value="<%= statusFilter %>"><% } %>
+                    <span class="search-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+                    <input type="text" name="q" placeholder="Search partner..." value="<%= q %>"><button type="submit">Search</button>
+                </form>
+            </div>
+            <% if (rows.length === 0) { %><div class="empty-state"><p>No business partners yet.</p></div><% } else { %>
+            <table><thead><tr><th class="col-num">#</th><th>Partner</th><th>Support Type</th><th>Donation</th><th>Status</th><th>Docs</th><th>Since</th></tr></thead><tbody>
+            <% rows.forEach(function(row,i){ var st=statusOf(row); %>
+                <tr class="row-link" onclick="window.location='/business/<%= row.id %>'">
+                    <td class="col-num"><%= i+1 %></td>
+                    <td class="name-cell"><strong><%= row.display_name %></strong><span><%= row.data.country || '' %></span></td>
+                    <td><% (row.data.support_type||[]).forEach(function(s){ %><span class="pill pill-prog"><%= s %></span> <% }); %></td>
+                    <td><%= row.data.donation_amount ? ('$' + Number(row.data.donation_amount).toLocaleString()) : '—' %></td>
+                    <td><span class="badge badge-biz-<%= st %>"><%= STATUS_LABEL[st] %></span></td>
+                    <td><% if (fileCountMap[row.id]) { %><span class="file-chip">&#128206; <%= fileCountMap[row.id] %></span><% } else { %><span class="file-chip">—</span><% } %></td>
+                    <td><%= row.data.partner_since || '—' %></td>
+                </tr>
+            <% }); %>
+            </tbody></table>
+            <% } %>
+        </div>
+    </main>
+</div>
+</body></html>

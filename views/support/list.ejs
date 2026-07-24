@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Partnership Support | One Connect Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="/admin.css" rel="stylesheet"></head>
+<body>
+<div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <div><h2>Partnership Support Request</h2><div class="greeting-sub">Requests routed from the website and entered manually.</div></div>
+            <div class="topbar-actions">
+                <% if (canCreate) { %><a href="/support/partners" class="btn-ghost">Manage Field Partners</a><a href="/support/new" class="btn-primary">+ New Request</a><% } %>
+            </div>
+        </div>
+        <% if (notice) { %><div class="banner banner-ok"><%= notice %></div><% } %>
+
+        <div class="stats-grid">
+            <a href="/support" class="stat-card <%= statusFilter === 'all' ? 'is-active' : '' %>"><span class="stat-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16M4 12h16M4 19h16"/></svg></span><div class="stat-body"><div class="stat-label">All Requests</div><div class="stat-value"><%= counts.all %></div></div></a>
+            <a href="/support?status=new" class="stat-card <%= statusFilter === 'new' ? 'is-active' : '' %>"><span class="stat-icon stat-icon-new"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></span><div class="stat-body"><div class="stat-label">New</div><div class="stat-value"><%= counts.new %></div></div></a>
+            <a href="/support?status=in_progress" class="stat-card <%= statusFilter === 'in_progress' ? 'is-active' : '' %>"><span class="stat-icon stat-icon-support"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><div class="stat-body"><div class="stat-label">In Progress</div><div class="stat-value"><%= counts.in_progress %></div></div></a>
+            <a href="/support?status=closed" class="stat-card <%= statusFilter === 'closed' ? 'is-active' : '' %>"><span class="stat-icon stat-icon-opportunity"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6 9 17l-5-5"/></svg></span><div class="stat-body"><div class="stat-label">Closed</div><div class="stat-value"><%= counts.closed %></div></div></a>
+        </div>
+
+        <div class="submissions-table">
+            <div class="table-head">
+                <div><h3>Requests</h3><div class="table-sub"><%= rows.length %> shown</div></div>
+                <form class="search-box" method="GET" action="/support">
+                    <% if (statusFilter !== 'all') { %><input type="hidden" name="status" value="<%= statusFilter %>"><% } %>
+                    <span class="search-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+                    <input type="text" name="q" placeholder="Search org or name..." value="<%= q %>"><button type="submit">Search</button>
+                </form>
+            </div>
+            <% if (rows.length === 0) { %><div class="empty-state"><p>No requests here yet.</p></div><% } else { %>
+            <table><thead><tr><th class="col-num">#</th><th>Organization / Contact</th><th>Source</th><th>Assigned To</th><th>Status</th><th>Files</th><th>Received</th></tr></thead>
+            <tbody>
+            <% rows.forEach(function(row,i){ var ws=workStatusOf(row); %>
+                <tr class="row-link" onclick="window.location='/support/<%= row.id %>'">
+                    <td class="col-num"><%= i+1 %></td>
+                    <td class="name-cell"><strong><%= row.display_name %></strong><span><%= row.display_subtitle %></span></td>
+                    <td><span class="pill <%= (row.data.source==='manual')?'pill-manual':'pill-web' %>"><%= row.data.source==='manual'?'Manual':'Website' %></span></td>
+                    <td><%= row.data.assigned_to ? row.data.assigned_to : '<span class="no-files">Unassigned</span>' %></td>
+                    <td><span class="badge badge-work-<%= ws %>"><%= WORK_LABEL[ws] %></span></td>
+                    <td><% if (fileCountMap[row.id]) { %><span class="file-chip">&#128206; <%= fileCountMap[row.id] %></span><% } else { %><span class="file-chip">—</span><% } %></td>
+                    <td><%= new Date(row.created_at).toLocaleDateString() %></td>
+                </tr>
+            <% }); %>
+            </tbody></table>
+            <% } %>
+        </div>
+    </main>
+</div>
+</body></html>

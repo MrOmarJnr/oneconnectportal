@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= submission.display_name %> | UIOGF Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/admin.css" rel="stylesheet">
+</head>
+<body>
+<div class="admin-shell">
+    <%- include('partials/sidebar') %>
+
+    <main class="admin-main">
+        <a href="/admin" class="back-link">← Back to all requests</a>
+
+        <div class="detail-header">
+            <div class="detail-title">
+                <span class="badge badge-type-<%= submission.type %>">
+                    <%= submission.type === 'opportunity' ? 'Opportunity Application' : 'Support Request' %>
+                </span>
+                <h2><%= submission.display_name %></h2>
+                <p><%= submission.display_subtitle %> · Submitted <%= new Date(submission.created_at + 'Z').toLocaleString() %></p>
+            </div>
+
+            <form class="status-form" method="POST" action="/admin/submissions/<%= submission.id %>/status">
+                <select name="status">
+                    <option value="new" <%= submission.status === 'new' ? 'selected' : '' %>>New</option>
+                    <option value="reviewed" <%= submission.status === 'reviewed' ? 'selected' : '' %>>Reviewed</option>
+                    <option value="archived" <%= submission.status === 'archived' ? 'selected' : '' %>>Archived</option>
+                </select>
+                <button type="submit">Update Status</button>
+            </form>
+        </div>
+
+        <div class="detail-doc">
+            <% sections.forEach(function(section, sIndex) { %>
+                <div class="doc-section <%= sIndex === 0 ? 'is-first' : '' %>">
+                    <h3><%= section.title %></h3>
+                    <dl class="doc-rows">
+                        <% section.rows.forEach(function(row) { %>
+                            <div class="doc-row">
+                                <dt><%= row.label %></dt>
+                                <dd><%= row.value %></dd>
+                            </div>
+                        <% }) %>
+                    </dl>
+                </div>
+            <% }) %>
+
+            <div class="doc-section">
+                <h3>Uploaded Files</h3>
+                <% if (files.length === 0) { %>
+                    <p class="no-files">No files were uploaded with this submission.</p>
+                <% } else { %>
+                    <ul class="file-list-detail">
+                        <% files.forEach(function(f) { %>
+                            <li>
+                                <div>
+                                    <a href="/admin/files/<%= f.id %>" target="_blank"><%= f.original_name %></a>
+                                    <div class="file-meta"><%= Math.round(f.size / 1024) %> KB</div>
+                                </div>
+                            </li>
+                        <% }) %>
+                    </ul>
+                <% } %>
+            </div>
+
+            <div class="doc-section is-last">
+                <h3>Consent Given</h3>
+                <ul class="consent-check-list">
+                    <% consent.forEach(function(c) { %>
+                        <li>
+                            <span class="tick <%= c.checked ? 'tick-yes' : 'tick-no' %>"><%= c.checked ? '✓' : '✕' %></span>
+                            <%= c.label %>
+                        </li>
+                    <% }) %>
+                </ul>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

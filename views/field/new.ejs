@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Field Case | One Connect Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/admin.css" rel="stylesheet">
+</head>
+<body>
+<div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <div>
+                <a href="/field" class="back-link">&larr; Back to field cases</a>
+                <h2>New Field Case</h2>
+                <div class="greeting-sub">Complete one case per school / community visited.</div>
+            </div>
+        </div>
+
+        <% if (error) { %><div class="banner banner-err"><%= error %></div><% } %>
+
+        <form method="POST" action="/field/new" enctype="multipart/form-data" class="fc-form">
+
+            <div class="panel">
+                <h3 class="panel-title">1 &middot; Visit Information</h3>
+                <div class="fc-grid">
+                    <% fc.VISIT_FIELDS.forEach(function(f){ %><%- include('../partials/field-input', { f: f, prefill: prefillPartner }) %><% }); %>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3 class="panel-title">2 &middot; Program Type Served <span class="panel-hint">select all that apply</span></h3>
+                <div class="prog-options">
+                    <% fc.PROGRAM_TYPES.forEach(function(p){ %>
+                        <label class="prog-check"><input type="checkbox" name="program_type" value="<%= p %>"><span><%= p %></span></label>
+                    <% }); %>
+                </div>
+                <div class="fc-field" style="margin-top:14px;max-width:420px;"><label>If “Other”, describe</label><input type="text" name="program_other" placeholder="e.g. Food security"></div>
+            </div>
+
+            <div class="panel">
+                <h3 class="panel-title">3 &middot; Qualification &amp; Coordination Checklist</h3>
+                <% fc.CHECK_GROUPS.forEach(function(g){ %>
+                    <div class="check-group">
+                        <div class="check-group-title"><%= g.title %></div>
+                        <% if (g.hint) { %><div class="check-group-hint"><%= g.hint %></div><% } %>
+                        <div class="check-list">
+                            <% g.items.forEach(function(item){ %>
+                                <label class="check-item"><input type="checkbox" name="<%= g.name %>" value="<%= item %>"><span><%= item %></span></label>
+                            <% }); %>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+
+            <div class="panel">
+                <h3 class="panel-title">4 &middot; Field Documentation — Field Notes</h3>
+                <div class="fc-grid">
+                    <% fc.FIELD_NOTES.forEach(function(f){ %><%- include('../partials/field-input', { f: f }) %><% }); %>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3 class="panel-title">5 &middot; Distribution Log</h3>
+                <div class="fc-grid">
+                    <% fc.DIST_LOG.forEach(function(f){ %><%- include('../partials/field-input', { f: f }) %><% }); %>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3 class="panel-title">6 &middot; Impact Summary</h3>
+                <div class="fc-grid">
+                    <% fc.IMPACT.forEach(function(f){ %><%- include('../partials/field-input', { f: f }) %><% }); %>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3 class="panel-title">7 &middot; Upload Files <span class="panel-hint">photos, documentation form, route screenshot, receipts</span></h3>
+                <input type="file" name="documents" multiple class="fc-file">
+                <p class="fc-file-hint">Up to 20 files, 50MB each. Large videos are best shared via your Google Drive link for now.</p>
+            </div>
+
+            <div class="fc-actions">
+                <a href="/field" class="btn-ghost">Cancel</a>
+                <button type="submit" class="btn-primary">Submit Field Case</button>
+            </div>
+        </form>
+    </main>
+</div>
+</body>
+</html>

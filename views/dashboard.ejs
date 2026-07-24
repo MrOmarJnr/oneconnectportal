@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | UIOGF Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/admin.css" rel="stylesheet">
+</head>
+<body>
+<div class="admin-shell">
+    <%- include('partials/sidebar') %>
+
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <div>
+                <h2>Hello <%= adminName %></h2>
+                <div class="greeting-sub">View all Opportunities &amp; Request Support submissions here.</div>
+            </div>
+            <form class="search-box" method="GET" action="/admin">
+                <% if (typeFilter !== 'all') { %><input type="hidden" name="type" value="<%= typeFilter %>"><% } %>
+                <span class="search-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+                <input type="text" name="q" placeholder="Search by name or org..." value="<%= q %>">
+                <button type="submit">Search</button>
+            </form>
+        </div>
+
+        <div class="stats-grid">
+            <a href="#" class="stat-card <%= typeFilter === 'all' && statusFilter === 'all' ? 'is-active' : '' %>">
+                <span class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></span>
+                <div class="stat-body"><div class="stat-label">Total Requests</div><div class="stat-value"><%= counts.all %></div></div>
+            </a>
+            <a href="#" class="stat-card <%= statusFilter === 'new' ? 'is-active' : '' %>">
+                <span class="stat-icon stat-icon-new"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+                <div class="stat-body"><div class="stat-label">New / Unreviewed</div><div class="stat-value"><%= counts.new %></div></div>
+            </a>
+            <a href="#" class="stat-card">
+                <span class="stat-icon stat-icon-support"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg></span>
+                <div class="stat-body"><div class="stat-label">Support Requests</div><div class="stat-value"><%= counts.support %></div></div>
+            </a>
+            <a href="#" class="stat-card ">
+                <span class="stat-icon stat-icon-opportunity"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>
+                <div class="stat-body"><div class="stat-label">Opportunities</div><div class="stat-value"><%= counts.opportunity %></div></div>
+            </a>
+        </div>
+
+        <div class="submissions-table">
+            <div class="table-head">
+                <div>
+                    <h3><% if (typeFilter === 'opportunity') { %>Opportunity Applications<% } else if (typeFilter === 'support') { %>Support Requests<% } else { %>All Requests<% } %></h3>
+                    <div class="table-sub"><%= rows.length %> shown</div>
+                </div>
+                <div class="status-tabs">
+                    <a href="?type=<%= typeFilter %>" class="<%= statusFilter === 'all' ? 'is-active' : '' %>">All</a>
+                    <a href="?type=<%= typeFilter %>&status=new" class="<%= statusFilter === 'new' ? 'is-active' : '' %>">New</a>
+                    <a href="?type=<%= typeFilter %>&status=reviewed" class="<%= statusFilter === 'reviewed' ? 'is-active' : '' %>">Reviewed</a>
+                    <a href="?type=<%= typeFilter %>&status=archived" class="<%= statusFilter === 'archived' ? 'is-active' : '' %>">Archived</a>
+                </div>
+            </div>
+
+            <% if (rows.length === 0) { %>
+                <div class="empty-state"><p>No requests found here yet.</p></div>
+            <% } else { %>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="col-num">#</th>
+                            <th>Name / Organization</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Files</th>
+                            <th>Submitted</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% rows.forEach(function(row, index) { %>
+                            <tr class="row-link" onclick="window.location='/admin/submissions/<%= row.id %>'">
+                                <td class="col-num"><%= index + 1 %></td>
+                                <td class="name-cell">
+                                    <strong><%= row.display_name %></strong>
+                                    <span><%= row.display_subtitle %></span>
+                                </td>
+                                <td><span class="badge badge-type-<%= row.type %>"><%= row.type === 'opportunity' ? 'Opportunity' : 'Support' %></span></td>
+                                <td><span class="badge badge-status-<%= row.status %>"><%= row.status %></span></td>
+                                <td><% if (fileCountMap[row.id]) { %><span class="file-chip">&#128206; <%= fileCountMap[row.id] %></span><% } else { %><span class="file-chip">&mdash;</span><% } %></td>
+                                <td><%= new Date(row.created_at + 'Z').toLocaleString() %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+
+                <div class="table-foot">
+                    <div class="foot-count">Showing 1 to <%= rows.length %> of <%= rows.length %> entries</div>
+                    <div class="pager"><span>&lt;</span><span class="is-current">1</span><span>&gt;</span></div>
+                </div>
+            <% } %>
+        </div>
+    </main>
+</div>
+</body>
+</html>
