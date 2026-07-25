@@ -20,6 +20,7 @@ const businessRoutes = require('./routes/business').router;
 const talentRoutes = require('./routes/talent');
 const reportRoutes = require('./routes/reports');
 const dashboardRoutes = require('./routes/dashboard');
+const draftRoutes = require('./routes/drafts');
 const { canAccess, landingFor, requireLogin } = require('./src/auth');
 
 const app = express();
@@ -93,6 +94,7 @@ app.use('/business', businessRoutes);
 app.use('/talent', talentRoutes);
 app.use('/reports', reportRoutes);
 app.use('/dashboard', dashboardRoutes);
+app.use('/drafts', draftRoutes);
 app.use('/', moduleRoutes);
 
 

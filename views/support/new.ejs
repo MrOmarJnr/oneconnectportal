@@ -1,3 +1,4 @@
+<% var data = (typeof data!=='undefined' && data) ? data : {}; var draftId = (typeof draftId!=='undefined') ? draftId : ''; %>
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,19 +12,24 @@
         <div class="admin-topbar"><div><a href="/support" class="back-link">&larr; Back to requests</a><h2>New Support Request</h2><div class="greeting-sub">Log a request received by email or phone.</div></div></div>
         <% if (error) { %><div class="banner banner-err"><%= error %></div><% } %>
         <form method="POST" action="/support/new" enctype="multipart/form-data" class="fc-form">
+            <input type="hidden" name="_draftId" value="<%= draftId %>">
             <% groups.forEach(function(g){ %>
             <div class="panel"><h3 class="panel-title"><%= g.group %></h3>
-                <div class="fc-grid"><% g.fields.forEach(function(f){ %><%- include('../partials/field-input', { f: f }) %><% }); %></div>
+                <div class="fc-grid"><% g.fields.forEach(function(f){ %><%- include('../partials/field-input', { f: f, data: data }) %><% }); %></div>
             </div>
             <% }); %>
             <div class="panel"><h3 class="panel-title">Case Management</h3>
                 <div class="fc-grid">
-                    <div class="fc-field"><label>Status</label><select name="work_status"><% WORK_STATUSES.forEach(function(s){ %><option value="<%= s %>"><%= WORK_LABEL[s] %></option><% }); %></select></div>
-                    <div class="fc-field"><label>Assign to Field Partner</label><select name="assigned_to"><option value="">— Unassigned —</option><% partners.forEach(function(p){ %><option value="<%= p.name %>"><%= p.name %></option><% }); %><option value="Other">Other</option></select></div>
+                    <div class="fc-field"><label>Status</label><select name="work_status"><% WORK_STATUSES.forEach(function(s){ %><option value="<%= s %>" <%= (data.work_status||'new')===s?'selected':'' %>><%= WORK_LABEL[s] %></option><% }); %></select></div>
+                    <div class="fc-field"><label>Assign to Field Partner</label><select name="assigned_to"><option value="">— Unassigned —</option><% partners.forEach(function(p){ %><option value="<%= p.name %>" <%= data.assigned_to===p.name?'selected':'' %>><%= p.name %></option><% }); %><option value="Other" <%= data.assigned_to==='Other'?'selected':'' %>>Other</option></select></div>
                 </div>
             </div>
-            <div class="panel"><h3 class="panel-title">Attachments <span class="panel-hint">optional</span></h3><input type="file" name="documents" multiple class="fc-file"></div>
-            <div class="fc-actions"><a href="/support" class="btn-ghost">Cancel</a><button type="submit" class="btn-primary">Create Request</button></div>
+            <div class="panel"><h3 class="panel-title">Attachments <span class="panel-hint">optional &middot; not saved in drafts</span></h3><input type="file" name="documents" multiple class="fc-file"></div>
+            <div class="fc-actions">
+                <a href="/support" class="btn-ghost">Cancel</a>
+                <button type="submit" class="btn-ghost" formaction="/drafts/save?module=support" formnovalidate>Save as Draft</button>
+                <button type="submit" class="btn-primary">Create Request</button>
+            </div>
         </form>
     </main>
 </div>

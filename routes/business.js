@@ -82,8 +82,10 @@ router.get('/', requireModule('business'), (req, res) => {
 
 // ---- Create ----
 router.get('/new', requireRole('admin'), (req, res) => {
+    let data = {}, draftId = '';
+    if (req.query.draft) { const dr = db.getDraft(req.query.draft); if (dr && dr.owner_id === req.session.adminId && dr.module === 'business') { data = dr.data || {}; draftId = dr.id; } }
     res.render('business/form', {
-        mode: 'new', groups: FIELDS, data: {}, SUPPORT_TYPES, STATUSES, STATUS_LABEL,
+        mode: 'new', id: '', groups: FIELDS, data, draftId, SUPPORT_TYPES, STATUSES, STATUS_LABEL,
         error: null, activeModule: 'business', adminName: req.session.adminName,
     });
 });

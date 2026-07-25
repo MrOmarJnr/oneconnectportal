@@ -1070,3 +1070,6 @@ a { text-decoration: none; color: inherit; }
 .qa-dark .qa-arrow { color: rgba(255,255,255,.7); }
 
 @media (max-width: 1000px) { .dash-kpis { grid-template-columns: repeat(2, 1fr); } .dash-main { grid-template-columns: 1fr; } .dash-charts { grid-template-columns: 1fr; } }
+
+/* Auth notice (password reset success) */
+.login-notice { background: var(--teal-soft); color: #14a37a; border-radius: 10px; padding: 12px 14px; font-size: 13.5px; margin-bottom: 18px; font-weight: 600; }

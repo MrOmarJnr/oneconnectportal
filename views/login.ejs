@@ -23,6 +23,9 @@
             <div class="auth-card">
                 <h2>Login to your account</h2>
 
+                <% if (typeof notice !== 'undefined' && notice) { %>
+                    <div class="login-notice"><%= notice %></div>
+                <% } %>
                 <% if (error) { %>
                     <div class="login-error"><%= error %></div>
                 <% } %>
@@ -33,7 +36,7 @@
 
                     <div class="auth-label-row">
                         <label for="password">Password</label>
-                        <span class="auth-forgot">Forgot ?</span>
+                        <a href="/forgot" class="auth-forgot">Forgot?</a>
                     </div>
                     <input type="password" id="password" name="password" placeholder="Enter your password" required>
 

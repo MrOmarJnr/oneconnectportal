@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const db = require('../src/db');
 const { requireModule, ROLES } = require('../src/auth');
+const mailer = require('../src/mailer');
 
 const router = express.Router();
 
@@ -38,7 +39,7 @@ router.get('/', (req, res) => {
 });
 
 // Create a new account with a unique login + password
-router.post('/create', upload.single('photo'), (req, res) => {
+router.post('/create', upload.single('photo'), async (req, res) => {
     const { name, email, role, password } = req.body;
     const cleanEmail = (email || '').trim().toLowerCase();
     const cleanName = (name || '').trim();
@@ -59,12 +60,20 @@ router.post('/create', upload.single('photo'), (req, res) => {
     const hash = bcrypt.hashSync(password, 10);
     const photo = req.file ? req.file.filename : '';
     db.insertAdmin({ name: cleanName, email: cleanEmail, password_hash: hash, role, photo });
-    req.session.userNotice = `Account created for ${cleanName} (${cleanEmail}).`;
+
+    let emailNote = '';
+    try {
+        const tpl = mailer.credentialsEmail({ name: cleanName, email: cleanEmail, password, role });
+        const r = await mailer.sendMail({ to: cleanEmail, subject: tpl.subject, html: tpl.html });
+        emailNote = r && r.ok ? ' Login details were emailed to them.' : ' (Email not sent — check RESEND_API_KEY.)';
+    } catch (e) { emailNote = ' (Email failed to send.)'; }
+
+    req.session.userNotice = `Account created for ${cleanName} (${cleanEmail}).` + emailNote;
     res.redirect('/users');
 });
 
 // Reset / set a user's password. If no password supplied, generate a temporary one.
-router.post('/:id/reset-password', (req, res) => {
+router.post('/:id/reset-password', async (req, res) => {
     const user = db.getAdminById(req.params.id);
     if (!user) return render(res, { error: 'User not found.' });
 
@@ -78,9 +87,17 @@ router.post('/:id/reset-password', (req, res) => {
     }
 
     db.updateAdminPassword(user.id, bcrypt.hashSync(password, 10));
+
+    let emailNote = '';
+    try {
+        const tpl = mailer.passwordResetByAdminEmail({ name: user.name, email: user.email, password });
+        const r = await mailer.sendMail({ to: user.email, subject: tpl.subject, html: tpl.html });
+        emailNote = r && r.ok ? ' The new password was emailed to them.' : ' (Email not sent — share it securely.)';
+    } catch (e) { emailNote = ' (Email failed — share it securely.)'; }
+
     req.session.userNotice = generated
-        ? `Temporary password for ${user.name}: ${password} — share it securely; they should change it.`
-        : `Password updated for ${user.name}.`;
+        ? `Temporary password for ${user.name}: ${password}.` + emailNote
+        : `Password updated for ${user.name}.` + emailNote;
     res.redirect('/users');
 });
 

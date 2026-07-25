@@ -103,9 +103,11 @@ router.post('/partners/:id/remove', requireRole('admin'), (req, res) => {
 
 // ---- Manual create (admin) ----
 router.get('/new', requireRole('admin'), (req, res) => {
+    let data = {}, draftId = '';
+    if (req.query.draft) { const dr = db.getDraft(req.query.draft); if (dr && dr.owner_id === req.session.adminId && dr.module === 'support') { data = dr.data || {}; draftId = dr.id; } }
     res.render('support/new', {
         groups: SUPPORT_FIELDS, partners: db.listFieldPartners({ activeOnly: true }),
-        WORK_STATUSES, WORK_LABEL, error: null,
+        WORK_STATUSES, WORK_LABEL, error: null, data, draftId,
         activeModule: 'support', adminName: req.session.adminName,
     });
 });
@@ -120,7 +122,7 @@ router.post('/new', requireRole('admin'), upload.array('documents', 10), (req, r
         return res.status(400).render('support/new', {
             groups: SUPPORT_FIELDS, partners: db.listFieldPartners({ activeOnly: true }),
             WORK_STATUSES, WORK_LABEL, activeModule: 'support', adminName: req.session.adminName,
-            error: 'Enter at least an organization or contact name.',
+            error: 'Enter at least an organization or contact name.', data: req.body || {}, draftId: (req.body && req.body._draftId) || '',
         });
     }
     const id = db.insertSubmission({

@@ -12,7 +12,7 @@
         <div class="admin-topbar">
             <div>
                 <h2>Hello <%= adminName %></h2>
-                <div class="greeting-sub">Here's a snapshot across all programs.</div>
+                <div class="greeting-sub">Dashboard Overview</div>
             </div>
             <a href="/reports" class="btn-primary">Open full analytics &rarr;</a>
         </div>
@@ -50,12 +50,15 @@
         </div>
     </main>
 </div>
+<script id="dashData" type="application/json"><%- JSON.stringify({ support: R.support.byStatus, program: R.field.byProgram, funnel: R.talent.funnel }) %></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="/reports.js"></script>
 <script>
-    const R = <%- JSON.stringify({ support: R.support.byStatus, program: R.field.byProgram, funnel: R.talent.funnel }) %>;
-    chPie('c_support', R.support);
-    chBar('c_program', R.program, false, '#6c5ce7');
-    chBar('c_funnel', R.funnel, true, '#23c69a');
+    (function () {
+        var R = JSON.parse(document.getElementById('dashData').textContent);
+        chPie('c_support', R.support);
+        chBar('c_program', R.program, false, '#6c5ce7');
+        chBar('c_funnel', R.funnel, true, '#23c69a');
+    })();
 </script>
 </body></html>

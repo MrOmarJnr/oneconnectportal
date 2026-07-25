@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Drafts | One Connect Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="/admin.css" rel="stylesheet"></head>
+<body>
+<div class="admin-shell">
+    <%- include('../partials/sidebar') %>
+    <main class="admin-main">
+        <div class="admin-topbar"><div><h2>My Drafts</h2><div class="greeting-sub">Half-finished forms you saved to continue later.</div></div></div>
+        <% if (notice) { %><div class="banner banner-ok"><%= notice %></div><% } %>
+        <div class="submissions-table">
+            <div class="table-head"><div><h3>Saved drafts</h3><div class="table-sub"><%= drafts.length %> total</div></div></div>
+            <% if (!drafts.length) { %>
+                <div class="empty-state"><p>No drafts yet. On any create form, click <strong>Save as Draft</strong> to keep your progress here.</p></div>
+            <% } else { %>
+                <table>
+                    <thead><tr><th class="col-num">#</th><th>Title</th><th>Type</th><th>Last saved</th><th>Actions</th></tr></thead>
+                    <tbody>
+                    <% drafts.forEach(function(d,i){ %>
+                        <tr>
+                            <td class="col-num"><%= i+1 %></td>
+                            <td class="name-cell"><strong><%= d.title %></strong></td>
+                            <td><span class="pill pill-prog"><%= d.moduleLabel %></span></td>
+                            <td><%= new Date(d.updated_at).toLocaleString() %></td>
+                            <td class="row-actions">
+                                <a href="<%= d.continueUrl %>" class="btn-primary" style="padding:8px 14px;">Continue</a>
+                                <form method="POST" action="/drafts/<%= d.id %>/delete" class="inline-form" onsubmit="return confirm('Delete this draft?');"><button class="btn-ghost btn-danger">Delete</button></form>
+                            </td>
+                        </tr>
+                    <% }); %>
+                    </tbody>
+                </table>
+            <% } %>
+        </div>
+    </main>
+</div>
+</body></html>

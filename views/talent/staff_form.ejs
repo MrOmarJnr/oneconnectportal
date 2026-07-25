@@ -1,3 +1,4 @@
+<% var draftId = (typeof draftId!=='undefined') ? draftId : ''; %>
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,6 +15,7 @@
         </div></div>
         <% if (error) { %><div class="banner banner-err"><%= error %></div><% } %>
         <form method="POST" action="<%= mode==='edit' ? '/talent/staff/'+id+'/edit' : '/talent/staff/new' %>" enctype="multipart/form-data" class="fc-form">
+            <% if (mode==='new') { %><input type="hidden" name="_draftId" value="<%= draftId %>"><% } %>
             <% groups.forEach(function(g){ %>
             <div class="panel">
                 <h3 class="panel-title"><%= g.group %><% if (g.sensitive) { %> <span class="panel-hint" style="color:#e5484d;">sensitive — not encrypted yet</span><% } %></h3>
@@ -26,7 +28,7 @@
                     <div class="fc-field"><label>Documents / contracts</label><input type="file" name="documents" multiple class="fc-file"></div>
                 </div>
             </div>
-            <div class="fc-actions"><a href="<%= mode==='edit' ? '/talent/staff/'+id : '/talent/staff' %>" class="btn-ghost">Cancel</a><button type="submit" class="btn-primary"><%= mode==='edit'?'Save Changes':'Create Profile' %></button></div>
+            <div class="fc-actions"><a href="<%= mode==='edit' ? '/talent/staff/'+id : '/talent/staff' %>" class="btn-ghost">Cancel</a><% if (mode==='new') { %><button type="submit" class="btn-ghost" formaction="/drafts/save?module=staff" formnovalidate>Save as Draft</button><% } %><button type="submit" class="btn-primary"><%= mode==='edit'?'Save Changes':'Create Profile' %></button></div>
         </form>
     </main>
 </div>

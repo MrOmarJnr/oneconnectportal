@@ -1,3 +1,4 @@
+<% var draftId = (typeof draftId!=='undefined') ? draftId : ''; %>
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,6 +15,7 @@
         </div></div>
         <% if (error) { %><div class="banner banner-err"><%= error %></div><% } %>
         <form method="POST" action="<%= mode==='edit' ? '/business/'+id+'/edit' : '/business/new' %>" enctype="multipart/form-data" class="fc-form">
+            <% if (mode==='new') { %><input type="hidden" name="_draftId" value="<%= draftId %>"><% } %>
             <% groups.forEach(function(g){ %>
             <div class="panel"><h3 class="panel-title"><%= g.group %></h3>
                 <div class="fc-grid"><% g.fields.forEach(function(f){ %><%- include('../partials/field-input', { f: f, data: data }) %><% }); %></div>
@@ -35,7 +37,7 @@
             <% if (mode==='new') { %>
             <div class="panel"><h3 class="panel-title">Documents <span class="panel-hint">optional — you can add more later</span></h3><input type="file" name="documents" multiple class="fc-file"></div>
             <% } %>
-            <div class="fc-actions"><a href="<%= mode==='edit' ? '/business/'+id : '/business' %>" class="btn-ghost">Cancel</a><button type="submit" class="btn-primary"><%= mode==='edit'?'Save Changes':'Create Partner' %></button></div>
+            <div class="fc-actions"><a href="<%= mode==='edit' ? '/business/'+id : '/business' %>" class="btn-ghost">Cancel</a><% if (mode==='new') { %><button type="submit" class="btn-ghost" formaction="/drafts/save?module=business" formnovalidate>Save as Draft</button><% } %><button type="submit" class="btn-primary"><%= mode==='edit'?'Save Changes':'Create Partner' %></button></div>
         </form>
     </main>
 </div>

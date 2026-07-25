@@ -1,3 +1,9 @@
+<%
+    var data = (typeof data!=='undefined' && data) ? data : {};
+    var draftId = (typeof draftId!=='undefined') ? draftId : '';
+    function _arr(v){ return v===undefined||v===null||v===''?[]:(Array.isArray(v)?v:[v]); }
+    var _progSel = _arr(data.program_type);
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,11 +28,12 @@
         <% if (error) { %><div class="banner banner-err"><%= error %></div><% } %>
 
         <form method="POST" action="/field/new" enctype="multipart/form-data" class="fc-form">
+            <input type="hidden" name="_draftId" value="<%= draftId %>">
 
             <div class="panel">
                 <h3 class="panel-title">1 &middot; Visit Information</h3>
                 <div class="fc-grid">
-                    <% fc.VISIT_FIELDS.forEach(function(f){ %><%- include('../partials/field-input', { f: f, prefill: prefillPartner }) %><% }); %>
+                    <% fc.VISIT_FIELDS.forEach(function(f){ %><%- include('../partials/field-input', { f: f, data: data, prefill: prefillPartner }) %><% }); %>
                 </div>
             </div>
 
@@ -34,21 +41,21 @@
                 <h3 class="panel-title">2 &middot; Program Type Served <span class="panel-hint">select all that apply</span></h3>
                 <div class="prog-options">
                     <% fc.PROGRAM_TYPES.forEach(function(p){ %>
-                        <label class="prog-check"><input type="checkbox" name="program_type" value="<%= p %>"><span><%= p %></span></label>
+                        <label class="prog-check"><input type="checkbox" name="program_type" value="<%= p %>" <%= _progSel.indexOf(p)>=0?'checked':'' %>><span><%= p %></span></label>
                     <% }); %>
                 </div>
-                <div class="fc-field" style="margin-top:14px;max-width:420px;"><label>If “Other”, describe</label><input type="text" name="program_other" placeholder="e.g. Food security"></div>
+                <div class="fc-field" style="margin-top:14px;max-width:420px;"><label>If &ldquo;Other&rdquo;, describe</label><input type="text" name="program_other" value="<%= data.program_other || '' %>" placeholder="e.g. Food security"></div>
             </div>
 
             <div class="panel">
                 <h3 class="panel-title">3 &middot; Qualification &amp; Coordination Checklist</h3>
-                <% fc.CHECK_GROUPS.forEach(function(g){ %>
+                <% fc.CHECK_GROUPS.forEach(function(g){ var _sel = _arr(data[g.name]); %>
                     <div class="check-group">
                         <div class="check-group-title"><%= g.title %></div>
                         <% if (g.hint) { %><div class="check-group-hint"><%= g.hint %></div><% } %>
                         <div class="check-list">
                             <% g.items.forEach(function(item){ %>
-                                <label class="check-item"><input type="checkbox" name="<%= g.name %>" value="<%= item %>"><span><%= item %></span></label>
+                                <label class="check-item"><input type="checkbox" name="<%= g.name %>" value="<%= item %>" <%= _sel.indexOf(item)>=0?'checked':'' %>><span><%= item %></span></label>
                             <% }); %>
                         </div>
                     </div>
@@ -58,32 +65,33 @@
             <div class="panel">
                 <h3 class="panel-title">4 &middot; Field Documentation — Field Notes</h3>
                 <div class="fc-grid">
-                    <% fc.FIELD_NOTES.forEach(function(f){ %><%- include('../partials/field-input', { f: f }) %><% }); %>
+                    <% fc.FIELD_NOTES.forEach(function(f){ %><%- include('../partials/field-input', { f: f, data: data }) %><% }); %>
                 </div>
             </div>
 
             <div class="panel">
                 <h3 class="panel-title">5 &middot; Distribution Log</h3>
                 <div class="fc-grid">
-                    <% fc.DIST_LOG.forEach(function(f){ %><%- include('../partials/field-input', { f: f }) %><% }); %>
+                    <% fc.DIST_LOG.forEach(function(f){ %><%- include('../partials/field-input', { f: f, data: data }) %><% }); %>
                 </div>
             </div>
 
             <div class="panel">
                 <h3 class="panel-title">6 &middot; Impact Summary</h3>
                 <div class="fc-grid">
-                    <% fc.IMPACT.forEach(function(f){ %><%- include('../partials/field-input', { f: f }) %><% }); %>
+                    <% fc.IMPACT.forEach(function(f){ %><%- include('../partials/field-input', { f: f, data: data }) %><% }); %>
                 </div>
             </div>
 
             <div class="panel">
-                <h3 class="panel-title">7 &middot; Upload Files <span class="panel-hint">photos, documentation form, route screenshot, receipts</span></h3>
+                <h3 class="panel-title">7 &middot; Upload Files <span class="panel-hint">photos, documentation form, route screenshot, receipts &middot; not saved in drafts</span></h3>
                 <input type="file" name="documents" multiple class="fc-file">
                 <p class="fc-file-hint">Up to 20 files, 50MB each. Large videos are best shared via your Google Drive link for now.</p>
             </div>
 
             <div class="fc-actions">
                 <a href="/field" class="btn-ghost">Cancel</a>
+                <button type="submit" class="btn-ghost" formaction="/drafts/save?module=field" formnovalidate>Save as Draft</button>
                 <button type="submit" class="btn-primary">Submit Field Case</button>
             </div>
         </form>

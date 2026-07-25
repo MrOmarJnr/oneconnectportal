@@ -20,7 +20,8 @@ function defaultState() {
         submissions: [],
         files: [],
         partners: [],
-        seq: { admins: 0, submissions: 0, files: 0, partners: 0 },
+        drafts: [],
+        seq: { admins: 0, submissions: 0, files: 0, partners: 0, drafts: 0 },
     };
 }
 
@@ -152,6 +153,29 @@ function updateAdminPhoto(id, photo) {
     const state = load();
     const u = state.admins.find((a) => a.id === Number(id));
     if (u) { u.photo = photo || ''; save(state); }
+    return u ? normalizeUser(u) : null;
+}
+
+function setResetToken(id, token, expiresISO) {
+    const state = load();
+    const u = state.admins.find((a) => a.id === Number(id));
+    if (u) { u.reset_token = token; u.reset_expires = expiresISO; save(state); }
+    return u ? normalizeUser(u) : null;
+}
+
+function getAdminByResetToken(token) {
+    if (!token) return null;
+    const state = load();
+    const u = state.admins.find((a) => a.reset_token === token);
+    if (!u) return null;
+    if (!u.reset_expires || new Date(u.reset_expires).getTime() < Date.now()) return null;
+    return normalizeUser(u);
+}
+
+function clearResetToken(id) {
+    const state = load();
+    const u = state.admins.find((a) => a.id === Number(id));
+    if (u) { delete u.reset_token; delete u.reset_expires; save(state); }
     return u ? normalizeUser(u) : null;
 }
 
@@ -331,6 +355,50 @@ function setSubmissionDisplay(id, display_name, display_subtitle) {
     return sub || null;
 }
 
+// ---------- Drafts (private per-user, resumable form saves) ----------
+
+function listDraftsByOwner(ownerId) {
+    const state = load();
+    return (state.drafts || [])
+        .filter((x) => x.owner_id === Number(ownerId))
+        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+}
+
+function getDraft(id) {
+    const state = load();
+    return (state.drafts || []).find((x) => x.id === Number(id)) || null;
+}
+
+function createDraft({ module, owner_id, owner_name, title, data }) {
+    const state = load();
+    if (!state.drafts) state.drafts = [];
+    const now = new Date().toISOString();
+    const draft = { id: nextId(state, 'drafts'), module, owner_id: Number(owner_id), owner_name: owner_name || '', title: title || 'Untitled', data: data || {}, created_at: now, updated_at: now };
+    state.drafts.push(draft);
+    save(state);
+    return draft;
+}
+
+function updateDraft(id, { title, data }) {
+    const state = load();
+    const draft = (state.drafts || []).find((x) => x.id === Number(id));
+    if (!draft) return null;
+    if (typeof title === 'string') draft.title = title;
+    if (data) draft.data = data;
+    draft.updated_at = new Date().toISOString();
+    save(state);
+    return draft;
+}
+
+function deleteDraft(id) {
+    const state = load();
+    if (!state.drafts) return false;
+    const before = state.drafts.length;
+    state.drafts = state.drafts.filter((x) => x.id !== Number(id));
+    save(state);
+    return state.drafts.length < before;
+}
+
 // ---------- First-run admin seeding ----------
 
 if (countAdmins() === 0) {
@@ -369,6 +437,14 @@ module.exports = {
     updateAdminPassword,
     updateAdmin,
     updateAdminPhoto,
+    setResetToken,
+    getAdminByResetToken,
+    clearResetToken,
+    listDraftsByOwner,
+    getDraft,
+    createDraft,
+    updateDraft,
+    deleteDraft,
     insertSubmission,
     insertFiles,
     listSubmissions,

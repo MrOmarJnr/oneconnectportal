@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forgot password | One Connect Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/admin.css" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-split">
+        <div class="auth-brandside">
+            <div class="auth-brand">United In One Global Foundation</div>
+            <div class="auth-brand-copy"><h1>One Connect Portal</h1><p>Building Hope<br>Changing Lives</p></div>
+        </div>
+        <div class="auth-formside">
+            <div class="auth-card">
+                <h2>Reset your password</h2>
+                <% if (sent) { %>
+                    <div class="login-notice">If an account exists for that email, a reset link is on its way. Check your inbox (and spam).</div>
+                    <p class="login-hint" style="text-align:left;"><a href="/login" class="auth-forgot">&larr; Back to sign in</a></p>
+                <% } else { %>
+                    <p class="login-hint" style="text-align:left;margin:0 0 18px;">Enter your email and we'll send you a link to set a new password.</p>
+                    <form method="POST" action="/forgot">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" placeholder="you@example.com" required autofocus>
+                        <button type="submit">Send reset link</button>
+                    </form>
+                    <p class="login-hint" style="text-align:left;margin-top:18px;"><a href="/login" class="auth-forgot">&larr; Back to sign in</a></p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

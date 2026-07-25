@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set new password | One Connect Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="/admin.css" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-split">
+        <div class="auth-brandside">
+            <div class="auth-brand">United In One Global Foundation</div>
+            <div class="auth-brand-copy"><h1>One Connect Portal</h1><p>Building Hope<br>Changing Lives</p></div>
+        </div>
+        <div class="auth-formside">
+            <div class="auth-card">
+                <h2>Set a new password</h2>
+                <% if (error) { %><div class="login-error"><%= error %></div><% } %>
+                <% if (token) { %>
+                    <form method="POST" action="/reset/<%= token %>">
+                        <label for="password">New password</label>
+                        <input type="password" id="password" name="password" placeholder="At least 8 characters" minlength="8" required autofocus>
+                        <label for="confirm">Confirm password</label>
+                        <input type="password" id="confirm" name="confirm" placeholder="Re-enter password" minlength="8" required>
+                        <button type="submit">Update password</button>
+                    </form>
+                <% } else { %>
+                    <p class="login-hint" style="text-align:left;">Request a new link from the <a href="/forgot" class="auth-forgot">forgot password</a> page.</p>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

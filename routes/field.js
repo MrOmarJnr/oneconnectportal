@@ -44,9 +44,12 @@ router.get('/', requireModule('field'), (req, res) => {
 
 // New-case form — only creators (admin, field)
 router.get('/new', requireRole('admin', 'field'), (req, res) => {
+    let data = {}, draftId = '';
+    if (req.query.draft) { const dr = db.getDraft(req.query.draft); if (dr && dr.owner_id === req.session.adminId && dr.module === 'field') { data = dr.data || {}; draftId = dr.id; } }
     res.render('field/new', {
         fc,
         prefillPartner: req.session.adminName || '',
+        data, draftId,
         error: null,
         activeModule: 'field',
         adminName: req.session.adminName,
@@ -75,7 +78,7 @@ router.post('/new', requireRole('admin', 'field'), upload.array('documents', 20)
         if (!data.location_name) {
             return res.status(400).render('field/new', {
                 fc, prefillPartner: data.field_partner || '', activeModule: 'field',
-                adminName: req.session.adminName,
+                adminName: req.session.adminName, data: req.body || {}, draftId: (req.body && req.body._draftId) || '',
                 error: 'Please enter the name of the school or community before submitting.',
             });
         }
@@ -94,7 +97,7 @@ router.post('/new', requireRole('admin', 'field'), upload.array('documents', 20)
         console.error(err);
         res.status(400).render('field/new', {
             fc, prefillPartner: req.session.adminName || '', activeModule: 'field',
-            adminName: req.session.adminName,
+            adminName: req.session.adminName, data: req.body || {}, draftId: (req.body && req.body._draftId) || '',
             error: 'Something went wrong saving the case: ' + err.message,
         });
     }

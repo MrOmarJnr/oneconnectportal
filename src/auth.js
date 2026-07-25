@@ -5,6 +5,7 @@
 
 const MODULE_ACCESS = {
     dashboard: ['admin', 'viewer'],           // Home dashboard
+    drafts:    ['admin', 'field'],            // My Drafts (creators)
     field:   ['admin', 'field', 'viewer'], // Create a Field Case (field users create; viewers view)
     support: ['admin', 'viewer'],          // Partnership Support Request
     business:['admin', 'viewer'],          // Business Partners

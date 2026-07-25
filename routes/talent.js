@@ -37,7 +37,9 @@ router.get('/volunteers', (req, res) => {
 });
 
 router.get('/volunteers/new', (req, res) => {
-    res.render('talent/volunteer_new', { error: null, activeModule: 'talent', talentTab: 'volunteers', adminName: req.session.adminName });
+    let data = {}, draftId = '';
+    if (req.query.draft) { const dr = db.getDraft(req.query.draft); if (dr && dr.owner_id === req.session.adminId && dr.module === 'volunteer') { data = dr.data || {}; draftId = dr.id; } }
+    res.render('talent/volunteer_new', { error: null, data, draftId, activeModule: 'talent', talentTab: 'volunteers', adminName: req.session.adminName });
 });
 router.post('/volunteers/new', (req, res) => {
     const data = {
@@ -128,7 +130,9 @@ router.get('/staff', (req, res) => {
 });
 
 router.get('/staff/new', (req, res) => {
-    res.render('talent/staff_form', { mode: 'new', groups: t.STAFF_GROUPS, data: {}, error: null, activeModule: 'talent', talentTab: 'staff', adminName: req.session.adminName });
+    let data = {}, draftId = '';
+    if (req.query.draft) { const dr = db.getDraft(req.query.draft); if (dr && dr.owner_id === req.session.adminId && dr.module === 'staff') { data = dr.data || {}; draftId = dr.id; } }
+    res.render('talent/staff_form', { mode: 'new', id: '', groups: t.STAFF_GROUPS, data, draftId, error: null, activeModule: 'talent', talentTab: 'staff', adminName: req.session.adminName });
 });
 router.post('/staff/new', upload.fields([{ name: 'photo', maxCount: 1 }, { name: 'documents', maxCount: 10 }]), (req, res) => {
     const data = collectStaff(req.body);
