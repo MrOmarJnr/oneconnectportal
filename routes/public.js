@@ -190,18 +190,40 @@ router.post('/submit/support', upload.array('documents', 10), (req, res) => {
         res.status(400).json({ ok: false, error: err.message });
     }
 });
-// From the website partnership form — routed to Business Partners as "Prospective"
+// From the website partnership form — routed to Business Partners as "Prospective".
+// The website form uses spaced/capitalized field names ("Organization Name",
+// "Full Name", "Countries", "Programs"...), so map them to the portal's schema
+// (partner_name, contact_name, country, support_type) or it shows "Unnamed Partner".
 router.post('/submit/partner', upload.array('documents', 10), (req, res) => {
     try {
-        const data = { ...req.body };
-        data.source = 'website';
-        if (!['prospective', 'active', 'inactive'].includes(data.status)) data.status = 'prospective';
-        if (data.support_type && !Array.isArray(data.support_type)) data.support_type = [data.support_type];
-        const name = (data.partner_name || data.company || data.contact_name || 'Unnamed Partner').toString();
+        const b = req.body || {};
+        const pick = (...keys) => {
+            for (const k of keys) {
+                if (b[k] != null && String(b[k]).trim() !== '') return String(b[k]).trim();
+            }
+            return '';
+        };
+        let support_type = (b['Programs'] != null) ? b['Programs'] : b['Partnership Opportunity'];
+        if (support_type == null) support_type = '';
+        if (!Array.isArray(support_type)) support_type = support_type ? [support_type] : [];
+        const data = {
+            partner_name:         pick('Organization Name', 'partner_name', 'company'),
+            contact_name:         pick('Full Name', 'contact_name', 'name'),
+            contact_email:        pick('Email', 'contact_email', 'email'),
+            contact_phone:        pick('Phone Number', 'contact_phone', 'phone'),
+            country:              [pick('Countries', 'country'), pick('Other Country')].filter(Boolean).join(', '),
+            support_type:         support_type,
+            organization_address: pick('Organization Address'),
+            timeline:             pick('Timeline'),
+            message:              pick('description', 'Additional Information', 'message'),
+            source: 'website',
+            status: 'prospective',
+        };
+        const name = data.partner_name || data.contact_name || 'Unnamed Partner';
         const id = db.insertSubmission({
             type: 'business',
             display_name: name,
-            display_subtitle: [data.country].filter(Boolean).join(' • ') || 'Business Partner',
+            display_subtitle: data.country || 'Business Partner',
             data,
         });
         if (req.files && req.files.length) db.insertFiles(id, req.files);
