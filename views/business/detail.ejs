@@ -1,5 +1,6 @@
 <%
     function val(v){ if(v===undefined||v===null||v==='') return '—'; if(Array.isArray(v)) return v.length?v.join(', '):'—'; return String(v); }
+    function has(v){ return !(v===undefined||v===null||v===''||(Array.isArray(v)&&v.length===0)); }
 %>
 <!DOCTYPE html>
 <html lang="en"><head>
@@ -37,18 +38,30 @@
         </div>
         <% } %>
         <div class="detail-doc">
-            <% groups.forEach(function(g, gi){ %>
-                <div class="doc-section <%= gi===0?'is-first':'' %>">
+            <%
+                // Only render a field group when at least one field in it has a value.
+                // Empty staff fields (Industry, Website, Donation, etc.) stay hidden on the
+                // read view — staff still fill them via Edit, which shows the full schema.
+                var shownGroups = 0;
+            %>
+            <% groups.forEach(function(g){
+                var visible = g.fields.filter(function(f){ return has(sub.data[f.key]); });
+                var showSupport = (g.group==='Partnership' && has(sub.data.support_type));
+                if (visible.length === 0 && !showSupport) return;
+                var isFirst = (shownGroups === 0); shownGroups++;
+            %>
+                <div class="doc-section <%= isFirst?'is-first':'' %>">
                     <h3><%= g.group %></h3>
                     <dl class="doc-rows">
-                        <% g.fields.forEach(function(f){ var v=sub.data[f.key]; if(f.key==='donation_amount'&&v) v='$'+Number(v).toLocaleString(); %>
+                        <% visible.forEach(function(f){ var v=sub.data[f.key]; if(f.key==='donation_amount'&&v) v='$'+Number(v).toLocaleString(); %>
                             <div class="doc-row"><dt><%= f.label %></dt><dd><%= val(v) %></dd></div>
                         <% }); %>
-                        <% if (g.group==='Partnership') { %><div class="doc-row"><dt>Support Type</dt><dd><%= val(sub.data.support_type) %></dd></div><% } %>
+                        <% if (showSupport) { %><div class="doc-row"><dt>Support Type</dt><dd><%= val(sub.data.support_type) %></dd></div><% } %>
                     </dl>
                 </div>
             <% }); %>
 
+            <% if (files.length || canManage) { %>
             <div class="doc-section is-last">
                 <h3>Document Repository</h3>
                 <% if (!files.length) { %><p class="no-files">No documents uploaded yet.</p><% } else { %>
@@ -61,6 +74,7 @@
                     </form>
                 <% } %>
             </div>
+            <% } %>
         </div>
     </main>
 </div>
