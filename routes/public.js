@@ -206,16 +206,23 @@ router.post('/submit/partner', upload.array('documents', 10), (req, res) => {
         let support_type = (b['Programs'] != null) ? b['Programs'] : b['Partnership Opportunity'];
         if (support_type == null) support_type = '';
         if (!Array.isArray(support_type)) support_type = support_type ? [support_type] : [];
+        const noteParts = [];
+        const partnershipOpportunity = pick('Partnership Opportunity');
+        const timeline = pick('Timeline');
+        const address = pick('Organization Address');
+        const extra = pick('description', 'Additional Information', 'message');
+        if (partnershipOpportunity) noteParts.push('Partnership opportunity: ' + partnershipOpportunity);
+        if (timeline) noteParts.push('Timeline: ' + timeline);
+        if (address) noteParts.push('Address: ' + address);
+        if (extra) noteParts.push(extra);
         const data = {
-            partner_name:         pick('Organization Name', 'partner_name', 'company'),
-            contact_name:         pick('Full Name', 'contact_name', 'name'),
-            contact_email:        pick('Email', 'contact_email', 'email'),
-            contact_phone:        pick('Phone Number', 'contact_phone', 'phone'),
-            country:              [pick('Countries', 'country'), pick('Other Country')].filter(Boolean).join(', '),
-            support_type:         support_type,
-            organization_address: pick('Organization Address'),
-            timeline:             pick('Timeline'),
-            message:              pick('description', 'Additional Information', 'message'),
+            partner_name:  pick('Organization Name', 'partner_name', 'company'),
+            contact_name:  pick('Full Name', 'contact_name', 'name'),
+            contact_email: pick('Email', 'contact_email', 'email'),
+            contact_phone: pick('Phone Number', 'contact_phone', 'phone'),
+            country:       [pick('Countries', 'country'), pick('Other Country')].filter(Boolean).join(', '),
+            support_type:  support_type,
+            notes:         noteParts.join('\n'),
             source: 'website',
             status: 'prospective',
         };
