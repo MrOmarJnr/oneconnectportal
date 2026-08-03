@@ -5,18 +5,9 @@ const crypto = require('crypto');
 const fs = require('fs');
 const https = require('https');
 const db = require('../src/db');
+const { blobStorage } = require('../src/filestore');
 const { displayNameFor, displaySubtitleFor } = require('../src/format');
 const router = express.Router();
-const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-    filename: (req, file, cb) => {
-        const unique = crypto.randomBytes(8).toString('hex');
-        const ext = path.extname(file.originalname);
-        cb(null, `${Date.now()}-${unique}${ext}`);
-    },
-});
 const ALLOWED_MIME = new Set([
     'application/pdf',
     'application/msword',
@@ -26,7 +17,7 @@ const ALLOWED_MIME = new Set([
     'image/jpg',
 ]);
 const upload = multer({
-    storage,
+    storage: blobStorage(),
     limits: { fileSize: 10 * 1024 * 1024, files: 10 }, // 10MB per file, matches form copy
     fileFilter: (req, file, cb) => {
         if (ALLOWED_MIME.has(file.mimetype)) return cb(null, true);

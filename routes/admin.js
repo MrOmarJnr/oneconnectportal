@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const db = require('../src/db');
+const { sendStoredFile } = require('../src/filestore');
 const { requireLogin, requireModule } = require('../src/auth');
 const { buildSections, buildConsent } = require('../src/format');
 
@@ -68,14 +69,7 @@ router.post('/submissions/:id/status', (req, res) => {
 
 // Protected file download — only logged-in admins can fetch uploaded documents/CVs
 router.get('/files/:fileId', (req, res) => {
-    const file = db.getFileById(req.params.fileId);
-    if (!file) return res.status(404).send('File not found');
-
-    const filePath = path.join(UPLOAD_DIR, file.stored_name);
-    if (!fs.existsSync(filePath)) return res.status(404).send('File missing on disk');
-
-    res.setHeader('Content-Disposition', `inline; filename="${file.original_name.replace(/"/g, '')}"`);
-    res.sendFile(filePath);
+    sendStoredFile(res, db.getFileById(req.params.fileId));
 });
 
 module.exports = router;

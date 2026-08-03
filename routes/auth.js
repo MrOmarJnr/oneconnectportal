@@ -39,9 +39,8 @@ router.post('/login', (req, res) => {
 });
 
 router.post('/logout', (req, res) => {
-    req.session.destroy(() => {
-        res.redirect('/login');
-    });
+    req.session = null; // cookie-session: clearing the cookie ends the session
+    res.redirect('/login');
 });
 
 

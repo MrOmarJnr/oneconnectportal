@@ -11,11 +11,14 @@ if (!name || !email || !password) {
     process.exit(1);
 }
 
-const hash = bcrypt.hashSync(password, 10);
-const { created } = db.upsertAdminPassword({ name, email, password_hash: hash });
-
-if (created) {
-    console.log(`Created new admin: ${email}`);
-} else {
-    console.log(`Updated password for existing admin: ${email}`);
-}
+// Hydrate the datastore from storage first — otherwise we'd operate on an empty
+// in-memory DB and overwrite the real data on save.
+db.ready().then(() => {
+    const hash = bcrypt.hashSync(password, 10);
+    const { created } = db.upsertAdminPassword({ name, email, password_hash: hash });
+    console.log(created ? `Created new admin: ${email}` : `Updated password for existing admin: ${email}`);
+    process.exit(0);
+}).catch((err) => {
+    console.error('Failed to load the database:', err.message);
+    process.exit(1);
+});

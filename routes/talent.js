@@ -6,18 +6,13 @@ const fs = require('fs');
 const db = require('../src/db');
 const t = require('../src/talent');
 const fmt = require('../src/format');
+const { blobStorage, sendStoredFile } = require('../src/filestore');
 const { requireModule } = require('../src/auth');
 
 const router = express.Router();
 router.use(requireModule('talent')); // admin-only
 
-const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-    filename: (req, file, cb) => cb(null, `${Date.now()}-${crypto.randomBytes(8).toString('hex')}${path.extname(file.originalname)}`),
-});
-const upload = multer({ storage, limits: { fileSize: 25 * 1024 * 1024, files: 12 } });
+const upload = multer({ storage: blobStorage(), limits: { fileSize: 25 * 1024 * 1024, files: 12 } });
 
 function stageOf(row) { return t.VOLUNTEER_STAGES.includes(row.data && row.data.stage) ? row.data.stage : 'applied'; }
 
@@ -184,12 +179,7 @@ router.get('/staff/:id', (req, res) => {
 
 // Shared file download for talent (volunteers CVs + staff docs/photos)
 router.get('/files/:fid', (req, res) => {
-    const file = db.getFileById(req.params.fid);
-    if (!file) return res.status(404).send('File not found');
-    const filePath = path.join(UPLOAD_DIR, file.stored_name);
-    if (!fs.existsSync(filePath)) return res.status(404).send('File missing on disk');
-    res.setHeader('Content-Disposition', `inline; filename="${file.original_name.replace(/"/g, '')}"`);
-    res.sendFile(filePath);
+    sendStoredFile(res, db.getFileById(req.params.fid));
 });
 
 router.use((err, req, res, next) => { if (err) return res.status(400).send('Error: ' + err.message); next(); });

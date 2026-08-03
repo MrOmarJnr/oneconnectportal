@@ -5,20 +5,13 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const db = require('../src/db');
+const { blobStorage, sendStoredName } = require('../src/filestore');
 const { requireModule, ROLES } = require('../src/auth');
 const mailer = require('../src/mailer');
 
 const router = express.Router();
 
-const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-const upload = multer({
-    storage: multer.diskStorage({
-        destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-        filename: (req, file, cb) => cb(null, `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${path.extname(file.originalname)}`),
-    }),
-    limits: { fileSize: 5 * 1024 * 1024 },
-});
+const upload = multer({ storage: blobStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 // All user-management routes are admin-only
 router.use(requireModule('users'));
@@ -130,9 +123,7 @@ router.post('/:id/status', (req, res) => {
 router.get('/avatar/:id', (req, res) => {
     const user = db.getAdminById(req.params.id);
     if (!user || !user.photo) return res.status(404).end();
-    const fp = path.join(UPLOAD_DIR, user.photo);
-    if (!fs.existsSync(fp)) return res.status(404).end();
-    res.sendFile(fp);
+    sendStoredName(res, user.photo);
 });
 
 module.exports = router;

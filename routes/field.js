@@ -5,23 +5,14 @@ const crypto = require('crypto');
 const fs = require('fs');
 const db = require('../src/db');
 const fc = require('../src/fieldcase');
+const { blobStorage, sendStoredFile } = require('../src/filestore');
 const { requireModule, requireRole } = require('../src/auth');
 
 const router = express.Router();
 
-const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-    filename: (req, file, cb) => {
-        const unique = crypto.randomBytes(8).toString('hex');
-        cb(null, `${Date.now()}-${unique}${path.extname(file.originalname)}`);
-    },
-});
 const upload = multer({
-    storage,
-    limits: { fileSize: 50 * 1024 * 1024, files: 20 }, // 50MB/file, 20 files (large media -> Vercel Blob later)
+    storage: blobStorage(),
+    limits: { fileSize: 50 * 1024 * 1024, files: 20 }, // 50MB/file, 20 files (stored in Vercel Blob)
 });
 
 // Everyone with field-module access can see the list; field users see only their own
@@ -126,12 +117,7 @@ router.post('/cases/:id/status', requireRole('admin'), (req, res) => {
 
 // Protected file download for field-module users
 router.get('/files/:id', requireModule('field'), (req, res) => {
-    const file = db.getFileById(req.params.id);
-    if (!file) return res.status(404).send('File not found');
-    const filePath = path.join(UPLOAD_DIR, file.stored_name);
-    if (!fs.existsSync(filePath)) return res.status(404).send('File missing on disk');
-    res.setHeader('Content-Disposition', `inline; filename="${file.original_name.replace(/"/g, '')}"`);
-    res.sendFile(filePath);
+    sendStoredFile(res, db.getFileById(req.params.id));
 });
 
 // Friendly multer errors

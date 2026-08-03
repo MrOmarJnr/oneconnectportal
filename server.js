@@ -1,13 +1,13 @@
 require('dotenv').config();
 
 const express = require('express');
-const session = require('express-session');
-const FileStore = require('session-file-store')(session);
+const cookieSession = require('cookie-session');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 
-require('./src/db'); // ensures DB + default admin are initialized before routes load
+const db = require('./src/db'); // hydrated in the ensureReady middleware below
+const { sendStoredName } = require('./src/filestore');
 
 const publicRoutes = require('./routes/public');
 const authRoutes = require('./routes/auth');
@@ -26,29 +26,53 @@ const { canAccess, landingFor, requireLogin } = require('./src/auth');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const SESSIONS_DIR = path.join(__dirname, 'data', 'sessions');
-if (!fs.existsSync(SESSIONS_DIR)) fs.mkdirSync(SESSIONS_DIR, { recursive: true });
-
+// Behind Vercel's proxy — needed so secure session cookies are honored over HTTPS.
+app.set('trust proxy', 1);
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Hydrate the datastore from storage before any route touches it. On Vercel each
+// cold start rehydrates from the private Blob; locally it reads data/db.json.
+// db.ready() is memoized, so this is effectively free after the first request.
+app.use((req, res, next) => {
+    db.ready().then(() => next()).catch(next);
+});
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+// Portal's own static assets (admin.css, reports.js, logo).
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(session({
-    store: new FileStore({ path: SESSIONS_DIR, retries: 1, logFn: () => {} }),
-    secret: process.env.SESSION_SECRET || 'change-this-session-secret-in-production',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-        maxAge: 1000 * 60 * 60 * 12, // 12 hours
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-    },
-}));
+// If the marketing website (../uiogf_rename) sits next to the portal — i.e. when
+// running both locally, or if you ever deploy them combined — serve it from this
+// same app. When the portal is deployed on its own (its own Vercel project), the
+// folder isn't present and this is simply skipped; the website is a separate
+// project that proxies /api/submit/* here.
+const SITE_DIR = path.join(__dirname, '..', 'uiogf_rename');
+if (fs.existsSync(SITE_DIR)) {
+    app.use(express.static(SITE_DIR, {
+        index: 'index.html',
+        setHeaders(res, filePath) {
+            if (/\.(css|js|png|jpe?g|webp|gif|svg|ico|woff2?|ttf|eot|pdf)$/i.test(filePath)) {
+                res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+            } else {
+                res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+            }
+        },
+    }));
+}
 
+// Stateless, signed cookie session — no server-side store, so it survives on
+// serverless where the filesystem is ephemeral. Only holds ids/role/name/photo.
+app.use(cookieSession({
+    name: 'uiogf_sess',
+    keys: [process.env.SESSION_SECRET || 'change-this-session-secret-in-production'],
+    maxAge: 1000 * 60 * 60 * 12, // 12 hours
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+}));
 
 // Expose the signed-in user + role to all views (sidebar uses these)
 app.use((req, res, next) => {
@@ -61,25 +85,18 @@ app.use((req, res, next) => {
     next();
 });
 
-// CORS for the public submission endpoints only — apply.html and request-support.html
-// are static files on a different origin (a different port locally, a different
-// domain in production), so the browser needs an explicit CORS allow before it'll
-// let those pages POST here. Admin routes below don't need this: the admin visits
-// this portal directly (same origin), so the session cookie just works.
-// Set ALLOWED_ORIGINS in .env to a comma-separated list once you know your site's
-// real domain(s), e.g. "https://unitedinone.org,https://www.unitedinone.org".
-// Left unset, every origin is allowed — fine for local testing, but tighten this
-// before going to production.
+// CORS for the public submission endpoints only. The website pages POST here; in
+// production lock this down by setting ALLOWED_ORIGINS to your real domain(s),
+// e.g. "https://unitedinone.org,https://www.unitedinone.org". Left unset, all
+// origins are allowed (fine while testing).
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
     .split(',')
     .map((o) => o.trim())
     .filter(Boolean);
 
-app.use('/api', cors({
-    origin: allowedOrigins.length ? allowedOrigins : true,
-}));
+app.use('/api', cors({ origin: allowedOrigins.length ? allowedOrigins : true }));
 
-// Public submission endpoints — called by apply.html and request-support.html on the main site
+// Public submission endpoints — called by the website forms
 app.use('/api', publicRoutes);
 
 // Auth pages
@@ -97,16 +114,14 @@ app.use('/dashboard', dashboardRoutes);
 app.use('/drafts', draftRoutes);
 app.use('/', moduleRoutes);
 
-
 // Serve the signed-in user's profile photo (if any)
 app.get('/me/avatar', requireLogin, (req, res) => {
     const photo = req.session && req.session.photo;
     if (!photo) return res.status(404).end();
-    const fp = path.join(__dirname, 'uploads', photo);
-    if (!fs.existsSync(fp)) return res.status(404).end();
-    res.sendFile(fp);
+    sendStoredName(res, photo);
 });
 
+// If the website index.html is somehow missing, fall back to the portal login.
 app.get('/', (req, res) => {
     res.redirect(req.session && req.session.adminId ? landingFor(req.session.role) : '/login');
 });
@@ -115,6 +130,12 @@ app.use((req, res) => {
     res.status(404).render('404');
 });
 
-app.listen(PORT, () => {
-    console.log(`UIOGF admin portal running at http://localhost:${PORT}`);
-});
+// Export the app for Vercel's serverless entry (api/index.js). Only start a
+// listener when run directly (local `npm start` / `npm run dev`).
+module.exports = app;
+
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`UIOGF site + portal running at http://localhost:${PORT}`);
+    });
+}

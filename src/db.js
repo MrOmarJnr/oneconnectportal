@@ -3,14 +3,8 @@
 // Fine for a nonprofit's volume of submissions. Writes are synchronous + atomic
 // (write to temp file, then rename) to avoid corrupting the file mid-write.
 
-const path = require('path');
-const fs = require('fs');
 const bcrypt = require('bcryptjs');
-
-const DATA_DIR = path.join(__dirname, '..', 'data');
-const DB_FILE = path.join(DATA_DIR, 'db.json');
-
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+const store = require('./blobstore');
 
 const ROLES = ['admin', 'field', 'viewer'];
 
@@ -25,27 +19,45 @@ function defaultState() {
     };
 }
 
+// The whole database lives in memory for the life of the instance and is
+// hydrated from (and flushed back to) storage — a local JSON file in dev, a
+// single private Vercel Blob in production. See src/blobstore.js. Keeping the
+// load()/save() API synchronous means none of the callers below had to change.
+let STATE = null;
+let readyPromise = null;
+
 function load() {
-    if (!fs.existsSync(DB_FILE)) {
-        const initial = defaultState();
-        save(initial);
-        return initial;
-    }
-    try {
-        const raw = fs.readFileSync(DB_FILE, 'utf8');
-        return JSON.parse(raw);
-    } catch (err) {
-        console.error('Failed to read/parse data/db.json — starting from an empty database.', err);
-        const initial = defaultState();
-        save(initial);
-        return initial;
-    }
+    if (!STATE) STATE = defaultState();
+    return STATE;
 }
 
 function save(state) {
-    const tmpFile = DB_FILE + '.tmp';
-    fs.writeFileSync(tmpFile, JSON.stringify(state, null, 2), 'utf8');
-    fs.renameSync(tmpFile, DB_FILE);
+    STATE = state;
+    store.persistDb(STATE); // sync file write in dev; background Blob flush on Vercel
+    return STATE;
+}
+
+// Hydrate once per instance, then seed first-run data if the store is empty.
+// server.js awaits this before any route runs, so load() always sees real data.
+async function ready() {
+    if (!readyPromise) {
+        readyPromise = (async () => {
+            const loaded = await store.loadDb(); // null = genuine first run; throws on real errors
+            STATE = loaded || defaultState();
+            const d = defaultState(); // backfill any collections missing from older saves
+            for (const k of Object.keys(d)) if (STATE[k] == null) STATE[k] = d[k];
+            if (!STATE.seq) STATE.seq = d.seq;
+            // Only seed on a genuine empty store — a read error would have thrown
+            // above and never reached here, so we can't clobber existing data.
+            seedIfEmpty();
+        })().catch((err) => {
+            // Don't cache a failed hydration — let the next request retry instead
+            // of leaving the instance permanently broken.
+            readyPromise = null;
+            throw err;
+        });
+    }
+    return readyPromise;
 }
 
 function nextId(state, table) {
@@ -207,6 +219,7 @@ function insertFiles(submissionId, files) {
             field_name: f.fieldname,
             original_name: f.originalname,
             stored_name: f.filename,
+            blob_url: f.blobUrl || null,
             size: f.size,
             mime_type: f.mimetype,
             created_at: new Date().toISOString(),
@@ -399,35 +412,34 @@ function deleteDraft(id) {
     return state.drafts.length < before;
 }
 
-// ---------- First-run admin seeding ----------
+// ---------- First-run seeding (called once from ready(), after hydration) ----------
 
-if (countAdmins() === 0) {
-    const email = process.env.ADMIN_EMAIL || 'admin@unitedinone.org';
-    const password = process.env.ADMIN_PASSWORD || 'ChangeMe123!';
-    const name = process.env.ADMIN_NAME || 'Admin';
-    const hash = bcrypt.hashSync(password, 10);
-    insertAdmin({ name, email, password_hash: hash, role: 'admin' });
-    console.log('----------------------------------------------------');
-    console.log('No admin account found — created a default one:');
-    console.log('  Email:    ' + email);
-    console.log('  Password: ' + password);
-    console.log('Set ADMIN_EMAIL / ADMIN_PASSWORD in .env before first');
-    console.log('run to control this, and change the password after.');
-    console.log('----------------------------------------------------');
-}
+function seedIfEmpty() {
+    if (countAdmins() === 0) {
+        const email = process.env.ADMIN_EMAIL || 'admin@unitedinone.org';
+        const password = process.env.ADMIN_PASSWORD || 'ChangeMe123!';
+        const name = process.env.ADMIN_NAME || 'Admin';
+        const hash = bcrypt.hashSync(password, 10);
+        insertAdmin({ name, email, password_hash: hash, role: 'admin' });
+        console.log('----------------------------------------------------');
+        console.log('No admin account found — created a default one:');
+        console.log('  Email:    ' + email);
+        console.log('  Password: ' + password);
+        console.log('Set ADMIN_EMAIL / ADMIN_PASSWORD before first run to');
+        console.log('control this, and change the password after.');
+        console.log('----------------------------------------------------');
+    }
 
-
-// Seed the standard country field partners on first run
-(function seedFieldPartners() {
     const state = load();
     if (!state.partners || state.partners.length === 0) {
         ['Kenya Field Partner', 'Nigeria Field Partner', 'Burundi Field Partner', 'Ghana Field Partner', 'Madagascar Field Partner']
             .forEach((n) => addFieldPartner(n));
     }
-})();
+}
 
 module.exports = {
     ROLES,
+    ready,
     getAdminByEmail,
     getAdminById,
     listAdmins,

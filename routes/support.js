@@ -5,17 +5,12 @@ const crypto = require('crypto');
 const fs = require('fs');
 const db = require('../src/db');
 const fmt = require('../src/format');
+const { blobStorage, sendStoredFile } = require('../src/filestore');
 const { requireModule, requireRole } = require('../src/auth');
 
 const router = express.Router();
 
-const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-    filename: (req, file, cb) => cb(null, `${Date.now()}-${crypto.randomBytes(8).toString('hex')}${path.extname(file.originalname)}`),
-});
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024, files: 10 } });
+const upload = multer({ storage: blobStorage(), limits: { fileSize: 10 * 1024 * 1024, files: 10 } });
 
 const WORK_STATUSES = ['new', 'in_progress', 'closed'];
 const WORK_LABEL = { new: 'New', in_progress: 'In Progress', closed: 'Closed' };
@@ -169,12 +164,7 @@ router.post('/:id/assign', requireRole('admin'), (req, res) => {
 
 // ---- File download ----
 router.get('/files/:id', requireModule('support'), (req, res) => {
-    const file = db.getFileById(req.params.id);
-    if (!file) return res.status(404).send('File not found');
-    const filePath = path.join(UPLOAD_DIR, file.stored_name);
-    if (!fs.existsSync(filePath)) return res.status(404).send('File missing on disk');
-    res.setHeader('Content-Disposition', `inline; filename="${file.original_name.replace(/"/g, '')}"`);
-    res.sendFile(filePath);
+    sendStoredFile(res, db.getFileById(req.params.id));
 });
 
 router.use((err, req, res, next) => { if (err) return res.status(400).send('Error: ' + err.message); next(); });

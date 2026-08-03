@@ -54,3 +54,6 @@ temp/
 
 # ===== Misc =====
 *.zip
+
+# ===== Vercel =====
+.vercel
